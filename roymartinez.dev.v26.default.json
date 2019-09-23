@@ -1,0 +1,1040 @@
+{
+    "accountId": "act_1-6JHGX",
+    "contractId": "ctr_1-1NC95D",
+    "groupId": "grp_63858",
+    "propertyName": "roymartinez.dev",
+    "propertyVersion": 26,
+    "ruleFormat": "latest",
+    "propertyId": "prp_549712",
+    "rules": {
+        "name": "default",
+        "children": [
+            {
+                "name": "Performance",
+                "children": [
+                    {
+                        "name": "Compressible Objects",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "gzipResponse",
+                                "options": {
+                                    "behavior": "ALWAYS"
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "contentType",
+                                "options": {
+                                    "matchCaseSensitive": false,
+                                    "matchOperator": "IS_ONE_OF",
+                                    "matchWildcard": true,
+                                    "values": [
+                                        "text/*",
+                                        "application/javascript",
+                                        "application/x-javascript",
+                                        "application/x-javascript*",
+                                        "application/json",
+                                        "application/x-json",
+                                        "application/*+json",
+                                        "application/*+xml",
+                                        "application/text",
+                                        "application/vnd.microsoft.icon",
+                                        "application/vnd-ms-fontobject",
+                                        "application/x-font-ttf",
+                                        "application/x-font-opentype",
+                                        "application/x-font-truetype",
+                                        "application/xmlfont/eot",
+                                        "application/xml",
+                                        "font/opentype",
+                                        "font/otf",
+                                        "font/eot",
+                                        "image/svg+xml",
+                                        "image/vnd.microsoft.icon"
+                                    ]
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all",
+                        "comments": "Compresses content to improve performance of clients with slow connections. Applies Last Mile Acceleration to requests when the returned object supports gzip compression."
+                    },
+                    {
+                        "name": "Image Manager",
+                        "children": [
+                            {
+                                "name": "Banner",
+                                "children": [
+                                    {
+                                        "name": "Mobile",
+                                        "children": [],
+                                        "behaviors": [
+                                            {
+                                                "name": "imOverride",
+                                                "options": {
+                                                    "override": "POLICY",
+                                                    "typesel": "VALUE",
+                                                    "policy": "BannersMobile"
+                                                }
+                                            }
+                                        ],
+                                        "criteria": [
+                                            {
+                                                "name": "deviceCharacteristic",
+                                                "options": {
+                                                    "characteristic": "IS_MOBILE",
+                                                    "booleanValue": true
+                                                }
+                                            },
+                                            {
+                                                "name": "deviceCharacteristic",
+                                                "options": {
+                                                    "characteristic": "IS_TABLET",
+                                                    "booleanValue": false
+                                                }
+                                            }
+                                        ],
+                                        "criteriaMustSatisfy": "all"
+                                    }
+                                ],
+                                "behaviors": [
+                                    {
+                                        "name": "imOverride",
+                                        "options": {
+                                            "override": "POLICY",
+                                            "typesel": "VALUE",
+                                            "policy": "BannersDesktop"
+                                        }
+                                    }
+                                ],
+                                "criteria": [
+                                    {
+                                        "name": "path",
+                                        "options": {
+                                            "matchOperator": "MATCHES_ONE_OF",
+                                            "values": [
+                                                "/img/banner/*"
+                                            ],
+                                            "matchCaseSensitive": false
+                                        }
+                                    }
+                                ],
+                                "criteriaMustSatisfy": "all"
+                            }
+                        ],
+                        "behaviors": [
+                            {
+                                "name": "caching",
+                                "options": {
+                                    "behavior": "MAX_AGE",
+                                    "mustRevalidate": false,
+                                    "ttl": "30d"
+                                }
+                            },
+                            {
+                                "name": "imageManager",
+                                "options": {
+                                    "advanced": false,
+                                    "apiReferenceTitle": "",
+                                    "applyBestFileType": true,
+                                    "enabled": true,
+                                    "policyTokenDefault": "roymartinez_dev",
+                                    "resize": false,
+                                    "settingsTitle": "",
+                                    "superCacheRegion": "US",
+                                    "trafficTitle": "",
+                                    "cpCodeOriginal": {
+                                        "id": 746487,
+                                        "description": "rmartine Pristine Images CP Code",
+                                        "products": [
+                                            "Fresca"
+                                        ],
+                                        "createdDate": 1536023882000,
+                                        "cpCodeLimits": null,
+                                        "name": "rmartine Pristine Images CP Code"
+                                    },
+                                    "cpCodeTransformed": {
+                                        "id": 746488,
+                                        "description": "rmartine Derivative Images CP Code",
+                                        "products": [
+                                            "Fresca"
+                                        ],
+                                        "createdDate": 1536023894000,
+                                        "cpCodeLimits": null,
+                                        "name": "rmartine Derivative Images CP Code"
+                                    }
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "fileExtension",
+                                "options": {
+                                    "matchCaseSensitive": false,
+                                    "matchOperator": "IS_ONE_OF",
+                                    "values": [
+                                        "jpg",
+                                        "gif",
+                                        "jpeg",
+                                        "png",
+                                        "imviewer"
+                                    ]
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all",
+                        "comments": "Enable Scale for Mobile to serve the best available size for the requesting device. (Careful testing is highly recommended.) Enable Use Best File Type to serve the image format that works best for the requesting client. To configure breakpoint widths, derivative image quality, and artistic transformations, save and activate this configuration; then, create policies for this policy set via either Image Manager Policy Manager or the OPEN Image Manager API."
+                    }
+                ],
+                "behaviors": [
+                    {
+                        "name": "enhancedAkamaiProtocol",
+                        "options": {
+                            "display": ""
+                        }
+                    },
+                    {
+                        "name": "http2",
+                        "options": {
+                            "enabled": ""
+                        }
+                    },
+                    {
+                        "name": "allowTransferEncoding",
+                        "options": {
+                            "enabled": true
+                        }
+                    },
+                    {
+                        "name": "removeVary",
+                        "options": {
+                            "enabled": true
+                        }
+                    },
+                    {
+                        "name": "sureRoute",
+                        "options": {
+                            "enabled": true,
+                            "forceSslForward": true,
+                            "raceStatTtl": "30m",
+                            "testObjectUrl": "/sitemap.xml",
+                            "toHostStatus": "INCOMING_HH",
+                            "type": "PERFORMANCE",
+                            "enableCustomKey": false,
+                            "srDownloadLinkTitle": ""
+                        }
+                    },
+                    {
+                        "name": "prefetch",
+                        "options": {
+                            "enabled": true
+                        }
+                    },
+                    {
+                        "name": "adaptiveAcceleration",
+                        "options": {
+                            "titleHttp2ServerPush": "",
+                            "enablePush": true,
+                            "titlePreconnect": "",
+                            "enablePreconnect": true,
+                            "titleRo": "",
+                            "enableRo": true,
+                            "source": "mPulse",
+                            "preloadEnable": true,
+                            "titlePreload": ""
+                        }
+                    },
+                    {
+                        "name": "frontEndOptimization",
+                        "options": {
+                            "enabled": true
+                        }
+                    },
+                    {
+                        "name": "dnsAsyncRefresh",
+                        "options": {
+                            "enabled": true,
+                            "timeout": "2h"
+                        }
+                    },
+                    {
+                        "name": "dnsPrefresh",
+                        "options": {
+                            "enabled": true,
+                            "delay": "5m",
+                            "timeout": "2h"
+                        },
+                        "uuid": "bd99676a-b703-4ca6-a01a-6602ccf391b2"
+                    },
+                    {
+                        "name": "advanced",
+                        "options": {
+                            "description": "Manual Server Preconnect",
+                            "xml": "<match:request.type value=\"CLIENT_REQ\">\n    <match:hoit host=\"fonts.googleapis.com\" result=\"false\">\n        <edgeservices:modify-outgoing-response.add-header>\n            <status>on</status>\n            <name>Link</name>\n            <value>&lt;%(AK_SCHEME)://fonts.googleapis.com&gt;; rel=preconnect</value>\n        </edgeservices:modify-outgoing-response.add-header>\n    </match:hoit>\n    <match:hoit host=\"fonts.gstatic.com\" result=\"false\">\n        <edgeservices:modify-outgoing-response.add-header>\n            <status>on</status>\n            <name>Link</name>\n            <value>&lt;%(AK_SCHEME)://fonts.gstatic.com&gt;; rel=preconnect</value>\n        </edgeservices:modify-outgoing-response.add-header>\n    </match:hoit>\n    <match:hoit host=\"maxcdn.bootstrapcdn.com\" result=\"false\">\n        <edgeservices:modify-outgoing-response.add-header>\n            <status>on</status>\n            <name>Link</name>\n            <value>&lt;%(AK_SCHEME)://maxcdn.bootstrapcdn.com&gt;; rel=preconnect</value>\n        </edgeservices:modify-outgoing-response.add-header>\n    </match:hoit>\n    <match:hoit host=\"www.google-analytics.com\" result=\"false\">\n        <edgeservices:modify-outgoing-response.add-header>\n            <status>on</status>\n            <name>Link</name>\n            <value>&lt;%(AK_SCHEME)://www.google-analytics.com&gt;; rel=preconnect</value>\n        </edgeservices:modify-outgoing-response.add-header>\n    </match:hoit>\n</match:request.type>"
+                        },
+                        "uuid": "029523ba-416f-4d1d-97e3-8874d4dd685d"
+                    },
+                    {
+                        "name": "advanced",
+                        "options": {
+                            "description": "Manual Server Push",
+                            "xml": "<match:uri.wildcard result=\"true\" value=\"*/\" case=\"off\">\n    <edgeservices:server-push>\n        <status>on</status>\n        <content-paths>%(PMUSER_MANUAL_PUSH_URLS)</content-paths>\n    </edgeservices:server-push>\n</match:uri.wildcard>"
+                        },
+                        "uuid": "d385d54b-8d95-4e78-853d-60c49921b1f7"
+                    }
+                ],
+                "uuid": "1b9b118f-481c-494c-8d69-525992415b83",
+                "criteria": [],
+                "criteriaMustSatisfy": "all",
+                "comments": "Improves the performance of delivering objects to end users. Behaviors in this rule are applied to all requests as appropriate."
+            },
+            {
+                "name": "Offload",
+                "children": [
+                    {
+                        "name": "CSS and JavaScript",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "caching",
+                                "options": {
+                                    "behavior": "MAX_AGE",
+                                    "mustRevalidate": false,
+                                    "ttl": "14d"
+                                }
+                            },
+                            {
+                                "name": "prefreshCache",
+                                "options": {
+                                    "enabled": true,
+                                    "prefreshval": 90
+                                }
+                            },
+                            {
+                                "name": "prefetchable",
+                                "options": {
+                                    "enabled": true
+                                }
+                            },
+                            {
+                                "name": "downstreamCache",
+                                "options": {
+                                    "behavior": "ALLOW",
+                                    "allowBehavior": "FROM_MAX_AGE",
+                                    "sendHeaders": "CACHE_CONTROL_AND_EXPIRES",
+                                    "sendPrivate": false
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "fileExtension",
+                                "options": {
+                                    "matchCaseSensitive": false,
+                                    "matchOperator": "IS_ONE_OF",
+                                    "values": [
+                                        "css",
+                                        "js"
+                                    ]
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "any",
+                        "comments": "Overrides the default caching behavior for CSS and JavaScript objects that are cached on the edge server. Because these object types are dynamic, the TTL is brief."
+                    },
+                    {
+                        "name": "Static Objects",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "caching",
+                                "options": {
+                                    "behavior": "MAX_AGE",
+                                    "mustRevalidate": false,
+                                    "ttl": "14d"
+                                }
+                            },
+                            {
+                                "name": "prefreshCache",
+                                "options": {
+                                    "enabled": true,
+                                    "prefreshval": 90
+                                }
+                            },
+                            {
+                                "name": "prefetchable",
+                                "options": {
+                                    "enabled": true
+                                }
+                            },
+                            {
+                                "name": "downstreamCache",
+                                "options": {
+                                    "behavior": "ALLOW",
+                                    "allowBehavior": "FROM_MAX_AGE",
+                                    "sendHeaders": "CACHE_CONTROL_AND_EXPIRES",
+                                    "sendPrivate": false
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "fileExtension",
+                                "options": {
+                                    "matchCaseSensitive": false,
+                                    "matchOperator": "IS_ONE_OF",
+                                    "values": [
+                                        "aif",
+                                        "aiff",
+                                        "au",
+                                        "avi",
+                                        "bin",
+                                        "bmp",
+                                        "cab",
+                                        "carb",
+                                        "cct",
+                                        "cdf",
+                                        "class",
+                                        "doc",
+                                        "dcr",
+                                        "dtd",
+                                        "exe",
+                                        "flv",
+                                        "gcf",
+                                        "gff",
+                                        "gif",
+                                        "grv",
+                                        "hdml",
+                                        "hqx",
+                                        "ico",
+                                        "ini",
+                                        "jpeg",
+                                        "jpg",
+                                        "mov",
+                                        "mp3",
+                                        "nc",
+                                        "pct",
+                                        "pdf",
+                                        "png",
+                                        "ppc",
+                                        "pws",
+                                        "swa",
+                                        "swf",
+                                        "txt",
+                                        "vbs",
+                                        "w32",
+                                        "wav",
+                                        "wbmp",
+                                        "wml",
+                                        "wmlc",
+                                        "wmls",
+                                        "wmlsc",
+                                        "xsd",
+                                        "zip",
+                                        "pict",
+                                        "tif",
+                                        "tiff",
+                                        "mid",
+                                        "midi",
+                                        "ttf",
+                                        "eot",
+                                        "woff",
+                                        "woff2",
+                                        "otf",
+                                        "svg",
+                                        "svgz",
+                                        "webp",
+                                        "jxr",
+                                        "jar",
+                                        "jp2"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "path",
+                                "options": {
+                                    "matchOperator": "DOES_NOT_MATCH_ONE_OF",
+                                    "values": [
+                                        "/shared/*"
+                                    ],
+                                    "matchCaseSensitive": false
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all",
+                        "comments": "Overrides the default caching behavior for images, music, and similar objects that are cached on the edge server. Because these object types are static, the TTL is long."
+                    },
+                    {
+                        "name": "Uncacheable Responses",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "downstreamCache",
+                                "options": {
+                                    "behavior": "TUNNEL_ORIGIN"
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "cacheability",
+                                "options": {
+                                    "matchOperator": "IS_NOT",
+                                    "value": "CACHEABLE"
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all",
+                        "comments": "Overrides the default downstream caching behavior for uncacheable object types. Instructs the edge server to pass Cache-Control and/or Expire headers from the origin to the client."
+                    },
+                    {
+                        "name": "Bypass Cache",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "caching",
+                                "options": {
+                                    "behavior": "BYPASS_CACHE"
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "requestCookie",
+                                "options": {
+                                    "cookieName": "bypass",
+                                    "matchOperator": "IS",
+                                    "value": "cache",
+                                    "matchWildcardName": false,
+                                    "matchCaseSensitiveName": true,
+                                    "matchWildcardValue": false,
+                                    "matchCaseSensitiveValue": true
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all"
+                    }
+                ],
+                "behaviors": [
+                    {
+                        "name": "caching",
+                        "options": {
+                            "behavior": "MAX_AGE",
+                            "mustRevalidate": false,
+                            "ttl": "10m"
+                        }
+                    },
+                    {
+                        "name": "cacheError",
+                        "options": {
+                            "enabled": true,
+                            "preserveStale": true,
+                            "ttl": "10s"
+                        }
+                    },
+                    {
+                        "name": "downstreamCache",
+                        "options": {
+                            "allowBehavior": "FROM_MAX_AGE",
+                            "behavior": "ALLOW",
+                            "sendHeaders": "CACHE_CONTROL_AND_EXPIRES",
+                            "sendPrivate": false
+                        }
+                    },
+                    {
+                        "name": "tieredDistribution",
+                        "options": {
+                            "enabled": true
+                        }
+                    },
+                    {
+                        "name": "prefreshCache",
+                        "options": {
+                            "enabled": true,
+                            "prefreshval": 90
+                        }
+                    },
+                    {
+                        "name": "removeVary",
+                        "options": {
+                            "enabled": true
+                        }
+                    }
+                ],
+                "criteria": [],
+                "criteriaMustSatisfy": "all",
+                "comments": "Controls caching, which offloads traffic away from the origin. Most objects types are not cached. However, the child rules override this behavior for certain subsets of requests."
+            },
+            {
+                "name": "Custom Rules",
+                "children": [
+                    {
+                        "name": "Basic Auth",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "modifyIncomingResponseHeader",
+                                "options": {
+                                    "action": "ADD",
+                                    "standardAddHeaderName": "OTHER",
+                                    "headerValue": "Basic realm=\"Secure Area\"",
+                                    "customHeaderName": "WWW-Authenticate"
+                                }
+                            },
+                            {
+                                "name": "responseCode",
+                                "options": {
+                                    "statusCode": 401
+                                }
+                            },
+                            {
+                                "name": "rewriteUrl",
+                                "options": {
+                                    "behavior": "REWRITE",
+                                    "targetUrl": "/401.html"
+                                }
+                            },
+                            {
+                                "name": "caching",
+                                "options": {
+                                    "behavior": "BYPASS_CACHE"
+                                }
+                            },
+                            {
+                                "name": "downstreamCache",
+                                "options": {
+                                    "behavior": "BUST"
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "requestHeader",
+                                "options": {
+                                    "headerName": "authorization",
+                                    "matchOperator": "IS_NOT_ONE_OF",
+                                    "values": [
+                                        "Basic YWthbGFiOmdjcw=="
+                                    ],
+                                    "matchWildcardName": false,
+                                    "matchWildcardValue": false,
+                                    "matchCaseSensitiveValue": true
+                                }
+                            },
+                            {
+                                "name": "path",
+                                "options": {
+                                    "matchOperator": "MATCHES_ONE_OF",
+                                    "values": [
+                                        "/trainings/akamai/*"
+                                    ],
+                                    "matchCaseSensitive": false
+                                }
+                            },
+                            {
+                                "name": "requestType",
+                                "options": {
+                                    "matchOperator": "IS",
+                                    "value": "CLIENT_REQ"
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all"
+                    },
+                    {
+                        "name": "URL Normalization",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "setVariable",
+                                "options": {
+                                    "variableName": "PMUSER_OUTGOING_PATH",
+                                    "valueSource": "EXPRESSION",
+                                    "transform": "LOWER",
+                                    "variableValue": "{{user.PMUSER_OUTGOING_PATH}}"
+                                }
+                            },
+                            {
+                                "name": "rewriteUrl",
+                                "options": {
+                                    "behavior": "REWRITE",
+                                    "targetUrl": "{{user.PMUSER_OUTGOING_PATH}}"
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "path",
+                                "options": {
+                                    "matchOperator": "DOES_NOT_MATCH_ONE_OF",
+                                    "values": [
+                                        "/css/*",
+                                        "/img/*",
+                                        "/js/*",
+                                        "/shared/*",
+                                        "/trainings/akamai/*"
+                                    ],
+                                    "matchCaseSensitive": false
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all"
+                    },
+                    {
+                        "name": "Mime Correction",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "modifyOutgoingResponseHeader",
+                                "options": {
+                                    "action": "MODIFY",
+                                    "standardModifyHeaderName": "CONTENT_TYPE",
+                                    "newHeaderValue": "text/plain",
+                                    "avoidDuplicateHeaders": true
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "path",
+                                "options": {
+                                    "matchOperator": "MATCHES_ONE_OF",
+                                    "values": [
+                                        "/trainings/akamai/devops/edgerc",
+                                        "/trainings/akamai/devops/auth"
+                                    ],
+                                    "matchCaseSensitive": false
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all"
+                    },
+                    {
+                        "name": "Server Header",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "modifyOutgoingResponseHeader",
+                                "options": {
+                                    "action": "MODIFY",
+                                    "standardModifyHeaderName": "OTHER",
+                                    "newHeaderValue": "Hi There",
+                                    "avoidDuplicateHeaders": true,
+                                    "customHeaderName": "Server"
+                                }
+                            }
+                        ],
+                        "criteria": [],
+                        "criteriaMustSatisfy": "all"
+                    },
+                    {
+                        "name": "Akamai Training NetStorage",
+                        "children": [
+                            {
+                                "name": "Default File",
+                                "children": [],
+                                "behaviors": [
+                                    {
+                                        "name": "rewriteUrl",
+                                        "options": {
+                                            "behavior": "REWRITE",
+                                            "targetUrl": "{{builtin.AK_PATH}}index.html"
+                                        }
+                                    }
+                                ],
+                                "criteria": [
+                                    {
+                                        "name": "path",
+                                        "options": {
+                                            "matchOperator": "MATCHES_ONE_OF",
+                                            "values": [
+                                                "*/"
+                                            ],
+                                            "matchCaseSensitive": false
+                                        }
+                                    }
+                                ],
+                                "criteriaMustSatisfy": "all"
+                            }
+                        ],
+                        "behaviors": [
+                            {
+                                "name": "origin",
+                                "options": {
+                                    "originType": "NET_STORAGE",
+                                    "netStorage": {
+                                        "downloadDomainName": "rmartineos.download.akamai.com",
+                                        "cpCode": 746467,
+                                        "g2oToken": "746467=XNVU1NlLVPNK7Lx3ntNM7fwQ265OTAqOI4iCduQxJ"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "caching",
+                                "options": {
+                                    "behavior": "MAX_AGE",
+                                    "mustRevalidate": false,
+                                    "ttl": "5m"
+                                }
+                            }
+                        ],
+                        "criteria": [
+                            {
+                                "name": "path",
+                                "options": {
+                                    "matchOperator": "MATCHES_ONE_OF",
+                                    "values": [
+                                        "/trainings/akamai/*"
+                                    ],
+                                    "matchCaseSensitive": false
+                                }
+                            }
+                        ],
+                        "criteriaMustSatisfy": "all"
+                    }
+                ],
+                "behaviors": [],
+                "criteria": [],
+                "criteriaMustSatisfy": "all"
+            },
+            {
+                "name": "Test rule",
+                "children": [
+                    {
+                        "name": "Test rule (Duplicate)",
+                        "children": [],
+                        "behaviors": [
+                            {
+                                "name": "origin",
+                                "options": {
+                                    "originType": "CUSTOMER",
+                                    "hostname": "{{user.PMUSER_ORIGIN}}",
+                                    "forwardHostHeader": "REQUEST_HOST_HEADER",
+                                    "cacheKeyHostname": "ORIGIN_HOSTNAME",
+                                    "compress": true,
+                                    "enableTrueClientIp": false,
+                                    "originCertificate": "",
+                                    "verificationMode": "CUSTOM",
+                                    "ports": "",
+                                    "httpPort": 80,
+                                    "httpsPort": 443,
+                                    "originSni": true,
+                                    "customValidCnValues": [
+                                        "{{Origin Hostname}}",
+                                        "{{Forward Host Header}}"
+                                    ],
+                                    "originCertsToHonor": "STANDARD_CERTIFICATE_AUTHORITIES",
+                                    "standardCertificateAuthorities": [
+                                        "akamai-permissive"
+                                    ]
+                                }
+                            }
+                        ],
+                        "criteria": [],
+                        "criteriaMustSatisfy": "all"
+                    }
+                ],
+                "behaviors": [
+                    {
+                        "name": "origin",
+                        "options": {
+                            "originType": "CUSTOMER",
+                            "hostname": "example.com",
+                            "forwardHostHeader": "REQUEST_HOST_HEADER",
+                            "cacheKeyHostname": "ORIGIN_HOSTNAME",
+                            "compress": true,
+                            "enableTrueClientIp": false,
+                            "originCertificate": "",
+                            "verificationMode": "CUSTOM",
+                            "ports": "",
+                            "httpPort": 80,
+                            "httpsPort": 443,
+                            "originSni": true,
+                            "customValidCnValues": [
+                                "{{Origin Hostname}}",
+                                "{{Forward Host Header}}"
+                            ],
+                            "originCertsToHonor": "STANDARD_CERTIFICATE_AUTHORITIES",
+                            "standardCertificateAuthorities": [
+                                "akamai-permissive"
+                            ]
+                        }
+                    }
+                ],
+                "criteria": [],
+                "criteriaMustSatisfy": "all"
+            }
+        ],
+        "behaviors": [
+            {
+                "name": "origin",
+                "options": {
+                    "cacheKeyHostname": "REQUEST_HOST_HEADER",
+                    "compress": true,
+                    "enableTrueClientIp": false,
+                    "forwardHostHeader": "REQUEST_HOST_HEADER",
+                    "hostname": "roymartinezblanco.github.io",
+                    "httpPort": 80,
+                    "httpsPort": 443,
+                    "originSni": true,
+                    "originType": "CUSTOMER",
+                    "verificationMode": "CUSTOM",
+                    "originCertificate": "",
+                    "ports": "",
+                    "customValidCnValues": [
+                        "{{Origin Hostname}}",
+                        "{{Forward Host Header}}",
+                        "www.github.com"
+                    ],
+                    "originCertsToHonor": "COMBO",
+                    "standardCertificateAuthorities": [
+                        "akamai-permissive"
+                    ],
+                    "customCertificateAuthorities": [
+                        {
+                            "subjectCN": "DigiCert SHA2 High Assurance Server CA",
+                            "subjectAlternativeNames": [],
+                            "subjectRDNs": {
+                                "C": "US",
+                                "OU": "www.digicert.com",
+                                "CN": "DigiCert SHA2 High Assurance Server CA",
+                                "O": "DigiCert Inc"
+                            },
+                            "issuerRDNs": {
+                                "C": "US",
+                                "OU": "www.digicert.com",
+                                "CN": "DigiCert High Assurance EV Root CA",
+                                "O": "DigiCert Inc"
+                            },
+                            "notBefore": 1382443200000,
+                            "notAfter": 1855828800000,
+                            "sigAlgName": "SHA256withRSA",
+                            "publicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtuAvwiQGyG0EX9fvCmQGsn0iJmUWrkJAm87cn592Bz7DMFWHGblPlA5alB9VVrTCAiqv0JjuC0DXxNA7csgUnu+QsRGprtLIuEM62QsL1dWV9UCvyB3tTZxfV7eGUGiZ9Yra0scFH6iXydyksYKELcatpZzHGYKmhQ9eRFgqN4/9NfELCCcyWvW7i56kvVHQJ+LdO0IzowUoxLsozJqsKyMNeMZ75l5xt0o+CPuBtxYWoZ0jEk3l15IIrHWknLrNF7IeRDVlf1MlOdEcCppjGxmSdGgKN8LCUkjLOVqituFdwd2gILghopMmbxRKIUHH7W2b8kgv8wP1omiSUy9e4wIDAQAB",
+                            "publicKeyAlgorithm": "RSA",
+                            "publicKeyFormat": "X.509",
+                            "serialNumber": 6.489877074546166e+36,
+                            "version": 3,
+                            "sha1Fingerprint": "a031c46782e6e6c662c2c87c76da9aa62ccabd8e",
+                            "pemEncodedCert": "-----BEGIN CERTIFICATE-----\nMIIEsTCCA5mgAwIBAgIQBOHnpNxc8vNtwCtCuF0VnzANBgkqhkiG9w0BAQsFADBs\nMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\nd3cuZGlnaWNlcnQuY29tMSswKQYDVQQDEyJEaWdpQ2VydCBIaWdoIEFzc3VyYW5j\nZSBFViBSb290IENBMB4XDTEzMTAyMjEyMDAwMFoXDTI4MTAyMjEyMDAwMFowcDEL\nMAkGA1UEBhMCVVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3\nLmRpZ2ljZXJ0LmNvbTEvMC0GA1UEAxMmRGlnaUNlcnQgU0hBMiBIaWdoIEFzc3Vy\nYW5jZSBTZXJ2ZXIgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC2\n4C/CJAbIbQRf1+8KZAayfSImZRauQkCbztyfn3YHPsMwVYcZuU+UDlqUH1VWtMIC\nKq/QmO4LQNfE0DtyyBSe75CxEamu0si4QzrZCwvV1ZX1QK/IHe1NnF9Xt4ZQaJn1\nitrSxwUfqJfJ3KSxgoQtxq2lnMcZgqaFD15EWCo3j/018QsIJzJa9buLnqS9UdAn\n4t07QjOjBSjEuyjMmqwrIw14xnvmXnG3Sj4I+4G3FhahnSMSTeXXkgisdaScus0X\nsh5ENWV/UyU50RwKmmMbGZJ0aAo3wsJSSMs5WqK24V3B3aAguCGikyZvFEohQcft\nbZvySC/zA/WiaJJTL17jAgMBAAGjggFJMIIBRTASBgNVHRMBAf8ECDAGAQH/AgEA\nMA4GA1UdDwEB/wQEAwIBhjAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIw\nNAYIKwYBBQUHAQEEKDAmMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2Vy\ndC5jb20wSwYDVR0fBEQwQjBAoD6gPIY6aHR0cDovL2NybDQuZGlnaWNlcnQuY29t\nL0RpZ2lDZXJ0SGlnaEFzc3VyYW5jZUVWUm9vdENBLmNybDA9BgNVHSAENjA0MDIG\nBFUdIAAwKjAoBggrBgEFBQcCARYcaHR0cHM6Ly93d3cuZGlnaWNlcnQuY29tL0NQ\nUzAdBgNVHQ4EFgQUUWj/kK8CB3U8zNllZGKiErhZcjswHwYDVR0jBBgwFoAUsT7D\naQP4v0cB1JgmGggC72NkK8MwDQYJKoZIhvcNAQELBQADggEBABiKlYkD5m3fXPwd\naOpKj4PWUS+Na0QWnqxj9dJubISZi6qBcYRb7TROsLd5kinMLYBq8I4g4Xmk/gNH\nE+r1hspZcX30BJZr01lYPf7TMSVcGDiEo+afgv2MW5gxTs14nhr9hctJqvIni5ly\n/D6q1UEL2tU2ob8cbkdJf17ZSHwD2f2LSaCYJkJA69aSEaRkCldUxPUd1gJea6zu\nxICaEnL6VpPX/78whQYwvwt/Tv9XBZ0k7YXDK/umdaisLRbvfXknsuvCnQsH6qqF\n0wGjIChBWUMo0oHjqvbsezt3tkBigAVBRQHvFwY+3sAzm2fTYS5yh+Rp/BIAV0Ae\ncPUeybQ=\n-----END CERTIFICATE-----\n",
+                            "canBeLeaf": true,
+                            "canBeCA": true,
+                            "selfSigned": false
+                        }
+                    ],
+                    "customCertificates": [
+                        {
+                            "subjectCN": "www.github.com",
+                            "subjectAlternativeNames": [
+                                "www.github.com",
+                                "*.github.io",
+                                "*.githubusercontent.com",
+                                "*.github.com",
+                                "github.com",
+                                "github.io",
+                                "githubusercontent.com"
+                            ],
+                            "subjectRDNs": {
+                                "ST": "California",
+                                "C": "US",
+                                "CN": "www.github.com",
+                                "L": "San Francisco",
+                                "O": "GitHub, Inc."
+                            },
+                            "issuerRDNs": {
+                                "C": "US",
+                                "OU": "www.digicert.com",
+                                "CN": "DigiCert SHA2 High Assurance Server CA",
+                                "O": "DigiCert Inc"
+                            },
+                            "notBefore": 1530057600000,
+                            "notAfter": 1592654400000,
+                            "sigAlgName": "SHA256withRSA",
+                            "publicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxjbKRw+cVNjgA/BhLfRTOAk6jRGT7WRmmWy/qhFmTxBKapW/Kh4UNeD7oUAB0yG+Fyvu1grVYR5RFUGBmA5mkqrBjCg4fNbFU9vLKIbkhpH3Jp2HVNLzvjzs/RqCN04MEc6Mnbmkjx1YeW9CveXojrt4x3Sa3nsPx6KcQtJpm8MuS8OhV2CJUF1etJpu9id5WJQdU3j3h65PmXMBvunm7UaGDt2WVK4CRcIb6j0X3H4cjh4WhXLyMcSPutXZVoD0FSmY+mjXVZCTJd+vHsYX1fj+kge20DJx0F8qmqJEr7bx1lfj7/U4aTgdZBDCB8wIl0fKcOdR3wq2RrDVRUlOuQIDAQAB",
+                            "publicKeyAlgorithm": "RSA",
+                            "publicKeyFormat": "X.509",
+                            "serialNumber": 1.8601291124064509e+37,
+                            "version": 3,
+                            "sha1Fingerprint": "700b6f624f41eb1a423f735ada96982d7f2b756f",
+                            "pemEncodedCert": "-----BEGIN CERTIFICATE-----\nMIIHMTCCBhmgAwIBAgIQDf56dauo4GsS0tOc8/ik/DANBgkqhkiG9w0BAQsFADBw\nMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\nd3cuZGlnaWNlcnQuY29tMS8wLQYDVQQDEyZEaWdpQ2VydCBTSEEyIEhpZ2ggQXNz\ndXJhbmNlIFNlcnZlciBDQTAeFw0xODA2MjcwMDAwMDBaFw0yMDA2MjAxMjAwMDBa\nMGoxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYwFAYDVQQHEw1T\nYW4gRnJhbmNpc2NvMRUwEwYDVQQKEwxHaXRIdWIsIEluYy4xFzAVBgNVBAMTDnd3\ndy5naXRodWIuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxjbK\nRw+cVNjgA/BhLfRTOAk6jRGT7WRmmWy/qhFmTxBKapW/Kh4UNeD7oUAB0yG+Fyvu\n1grVYR5RFUGBmA5mkqrBjCg4fNbFU9vLKIbkhpH3Jp2HVNLzvjzs/RqCN04MEc6M\nnbmkjx1YeW9CveXojrt4x3Sa3nsPx6KcQtJpm8MuS8OhV2CJUF1etJpu9id5WJQd\nU3j3h65PmXMBvunm7UaGDt2WVK4CRcIb6j0X3H4cjh4WhXLyMcSPutXZVoD0FSmY\n+mjXVZCTJd+vHsYX1fj+kge20DJx0F8qmqJEr7bx1lfj7/U4aTgdZBDCB8wIl0fK\ncOdR3wq2RrDVRUlOuQIDAQABo4IDyzCCA8cwHwYDVR0jBBgwFoAUUWj/kK8CB3U8\nzNllZGKiErhZcjswHQYDVR0OBBYEFI+I3Dwd7kQJ5DCMBsoC859olPB5MHsGA1Ud\nEQR0MHKCDnd3dy5naXRodWIuY29tggsqLmdpdGh1Yi5pb4IXKi5naXRodWJ1c2Vy\nY29udGVudC5jb22CDCouZ2l0aHViLmNvbYIKZ2l0aHViLmNvbYIJZ2l0aHViLmlv\nghVnaXRodWJ1c2VyY29udGVudC5jb20wDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQW\nMBQGCCsGAQUFBwMBBggrBgEFBQcDAjB1BgNVHR8EbjBsMDSgMqAwhi5odHRwOi8v\nY3JsMy5kaWdpY2VydC5jb20vc2hhMi1oYS1zZXJ2ZXItZzYuY3JsMDSgMqAwhi5o\ndHRwOi8vY3JsNC5kaWdpY2VydC5jb20vc2hhMi1oYS1zZXJ2ZXItZzYuY3JsMEwG\nA1UdIARFMEMwNwYJYIZIAYb9bAEBMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8vd3d3\nLmRpZ2ljZXJ0LmNvbS9DUFMwCAYGZ4EMAQICMIGDBggrBgEFBQcBAQR3MHUwJAYI\nKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmRpZ2ljZXJ0LmNvbTBNBggrBgEFBQcwAoZB\naHR0cDovL2NhY2VydHMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0U0hBMkhpZ2hBc3N1\ncmFuY2VTZXJ2ZXJDQS5jcnQwDAYDVR0TAQH/BAIwADCCAX4GCisGAQQB1nkCBAIE\nggFuBIIBagFoAHYA7ku9t3XOYLrhQmkfq+GeZqMPfl+wctiDAMR7iXqo/csAAAFk\nQsgYsgAABAMARzBFAiBe00KrPC3L9DUwJ0rYXoQ+Fh70UM3rYNyT9uLyEo1kfAIh\nALtR7krXouwsj4s52P2bWJiS0QKGLvbnBGnZLn4WNScDAHYAh3W/51l8+IxDmV+9\n827/Vo1HVjb/SrVgwbTq/16ggw8AAAFkQsgYswAABAMARzBFAiB2wURHjtfhDN6l\n3Q9gaYnu9h5xsFjJIOA3qO1dzqNVjQIhANPyeXq61y1gsHH/Iq2aqv43CMjjDQ8p\n02baNg3puNoMAHYAu9nfvB+KcbWTlCOXqpJ7RzhXlQqrUugakJZkNo4e0YUAAAFk\nQsgX9wAABAMARzBFAiEAhxuoQCyQzEoSK8/f4AXq+d0RZ3550opfcEty3p7gHyAC\nIBZ3NXHCNZpH6ow7D/qUZcfXkuMk/aZvR9uHoVvkixbcMA0GCSqGSIb3DQEBCwUA\nA4IBAQCjPNhowM6/PVcxHtl18r+92pPzU3JRGnXfz/P077yEgIIgs8I0lPqi9AiW\nQYev56+Ar4a39y+666s55ogjIVL+7cboKPgqflEY1POCg64UZNDHHPTnd5ba2OUw\ndtk1QtrEtYbUKm0W/1Ne9JRdN2rh5J87NsSPhirmKsP6HA3OhL93LTqB72Iehwj+\nqmIrQhkhJiTReWTb5sNrD2gIt8Dhuts/M84a9v7Hrkq/VPYVmARm7Py0GC/jqxpI\nNCHBEAFKN2c7iqmx1dVOGJDV3U0TCa0yWbnXsZ9M0652zH1obM3UxCtUMuUZzDb9\naTrrJ67dru040mysq2NLPPq+t+EQ\n-----END CERTIFICATE-----\n",
+                            "canBeLeaf": true,
+                            "canBeCA": false,
+                            "selfSigned": false
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "cpCode",
+                "options": {
+                    "value": {
+                        "id": 746489,
+                        "description": "ION rmartine",
+                        "products": [
+                            "Fresca"
+                        ],
+                        "createdDate": 1536023929000,
+                        "cpCodeLimits": null,
+                        "name": "ION rmartine"
+                    }
+                }
+            },
+            {
+                "name": "allowPost",
+                "options": {
+                    "allowWithoutContentLength": false,
+                    "enabled": true
+                }
+            },
+            {
+                "name": "mPulse",
+                "options": {
+                    "apiKey": "5QTSN-R4ELP-3YHZA-6SBR4-T6GVG",
+                    "bufferSize": "",
+                    "configOverride": "",
+                    "enabled": true,
+                    "requirePci": false,
+                    "titleOptional": ""
+                }
+            },
+            {
+                "name": "httpStrictTransportSecurity",
+                "options": {
+                    "enable": true,
+                    "maxAge": "ONE_DAY",
+                    "includeSubDomains": false,
+                    "preload": false,
+                    "redirect": true,
+                    "redirectStatusCode": 301
+                }
+            }
+        ],
+        "uuid": "default",
+        "options": {
+            "is_secure": true
+        },
+        "variables": [
+            {
+                "name": "PMUSER_OUTGOING_PATH",
+                "value": "%(AK_URL)",
+                "description": "Extract URL",
+                "hidden": false,
+                "sensitive": false
+            },
+            {
+                "name": "PMUSER_MANUAL_PUSH_URLS",
+                "value": "/css/bootstrap.min.css /css/bootstrap-social.css /js/jquery-1.11.2.min.js /js/bootstrap.min.js /img/banner/main.jpg /fonts/fontawesome-webfont.woff2",
+                "description": "URLS To be manually pushed to client",
+                "hidden": false,
+                "sensitive": false
+            },
+            {
+                "name": "PMUSER_ORIGIN",
+                "value": "",
+                "description": "",
+                "hidden": false,
+                "sensitive": false
+            }
+        ],
+        "comments": "The behaviors in the Default Rule apply to all requests for the property hostname(s) unless another rule overrides the Default Rule settings."
+    }
+}
