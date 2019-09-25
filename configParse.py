@@ -8,15 +8,19 @@ from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
 
 parser = argparse.ArgumentParser(description='Akamai Cert Validity Automation Script')
-parser.add_argument('-d', nargs='+', type=str, help='<Required> List of domains to query.',
+parser.add_argument('--audit', type=str, choices=['account','configuration','file','list'], help='Type of Audit to be done: [account,configuration,file,list]',
+                    required=True)
+parser.add_argument('--domains', nargs='+', type=str, help='<Required> List of domains to query.',
                     required=False)
-parser.add_argument('-o', type=str, help='-o JSON for json formated output',
+parser.add_argument('--output', type=str, help='-o JSON for json formated output',
                     required=False)
-parser.add_argument('-t', type=str, choices=['LIST','PM'], help='File Type (LIST, PM)',
-                    required=False)
-parser.add_argument('-f', type=str, help='File with list of domains (one per line)',
-                    required=False)               
-parser.add_argument('-v', help='Show Errors',
+parser.add_argument('--file-type', type=str, choices=['list','akamai'], help='File Type (list, akamai)',
+                    required=False,default='akamai')  
+parser.add_argument('--file', type=str, help='File with list of domains (one per line)',
+                    required=False)         
+parser.add_argument('--config-name', type=str, help='Name or List of Names to be audited.)',
+                    required=False)          
+parser.add_argument('--verbose', help='Show Errors',
                     required=False, action='store_true')
 args = vars(parser.parse_args())
 
@@ -223,21 +227,34 @@ def papi(a: Credentials,action:str,verbose:str):
     return None
 def run():
 
-    if (args['f'] is None and args['d'] is None):
-        parser.error("Either -d or -f are requiered to provide list of domains.")
 
-    if args['f']:
-        if args['t'] is None:
-            parser.error("-f requieres -t File Type (LIST, PM)")
+
+
+    if args['audit'] == "list":
+        if args['domains'] is None:
+            parser.error("--domains is requiered to provide list of domains.")
         else:
-            #readFile(args['f'],args['t'],args['o'],args['v'])
+            getCertificates(args['domains'],args['output'],args['verbose'])
+    elif (args['audit'] == "file"):
+        if (args['file'] is None):
+            parser.error("--file is requiered to provide the file to audited.")
+        else:
+            readFile(args['file'],args['t'],args['output'],args['verbose'])
+    #if (args['f'] is None and args['d'] is None):
+    #    parser.error("Either -d or -f are requiered to provide list of domains.")
+
+    # if args['f']:
+    #     if args['t'] is None:
+    #         parser.error("-f requieres -t File Type (LIST, PM)")
+    #     else:
+    #         #readFile(args['f'],args['t'],args['o'],args['v'])
             
-            a = readEdgeRC()
+    #         a = readEdgeRC()
            
 
-            if a is None:
-                parser.error("Unable to read EdgeRc Credientials for PAPI section")
-            j=papi(a,"GetRuleTree",args['v'])
+    #         if a is None:
+    #             parser.error("Unable to read EdgeRc Credientials for PAPI section")
+    #         j=papi(a,"GetRuleTree",args['v'])
             
             
     else:
