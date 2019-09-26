@@ -6,19 +6,22 @@ from akamai.edgegrid import EdgeGridAuth
 #from urllib.parse import urljoin
 from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
+#TODO: 
+    # * Update Get Certificate to return list only
+    # * Update print function to pring both bash and json and take in the two ListGroups
 
 parser = argparse.ArgumentParser(description='Akamai Cert Validity Automation Script')
-parser.add_argument('--audit', type=str, choices=['account','configuration','file','list'], help='Type of Audit to be done: [account,configuration,file,list]',
+parser.add_argument('--audit', type=str, choices=['account','config','file','list'], help='Type of Audit to be done: [account,config,file,list]',
                     required=True)
 parser.add_argument('--domains', nargs='+', type=str, help='<Required> List of domains to query.',
                     required=False)
 parser.add_argument('--output', type=str, help='-o JSON for json formated output',
                     required=False)
 parser.add_argument('--file-type', type=str, choices=['list','akamai'], help='File Type (list, akamai)',
-                    required=False,default='akamai')  
+                    required=False, default='akamai')  
 parser.add_argument('--file', type=str, help='File with list of domains (one per line)',
                     required=False)         
-parser.add_argument('--config-name', type=str, help='Name or List of Names to be audited.)',
+parser.add_argument('--config-name',nargs='+', type=str, help='Name or List of Names to be audited.)',
                     required=False)          
 parser.add_argument('--verbose', help='Show Errors',
                     required=False, action='store_true')
@@ -33,7 +36,7 @@ class Credentials:
         self.access_token = ""
         self.client_token = ""
 
-def readFile(File,Ftype:str,outtype: str,verbose:str):
+def readObject(File,Ftype:str,outtype: str,verbose:str):
     
     if Ftype != "API":
         if os.path.exists(File):
@@ -44,15 +47,12 @@ def readFile(File,Ftype:str,outtype: str,verbose:str):
                 #print(f)
                 try:
                     with open(File) as handle:
-                        dictdump = json.loads(handle.read())
-
-                    
+                        dictdump = json.loads(handle.read())                 
                 except:
                     parser.error("Unable to Parse JSON File, please validate format.")
                 else:
                     origins=[]
                     finditem(dictdump,origins)
-                    print(origins)
                     getCertificates(origins,outtype,verbose)
         else:
             parser.error("The File {} does not exist!".format(File))
@@ -60,8 +60,6 @@ def readFile(File,Ftype:str,outtype: str,verbose:str):
     else:
         origins=[]
         finditem(File,origins)
-        print(origins)
-
         getCertificates(origins,outtype,verbose)
 
 
@@ -92,15 +90,15 @@ def printJson(output):
     print(json.dumps(output, indent=4, sort_keys=True))
     
     return
-def getCertificates(domains: list,outtype: str,verbose:str):
-    errors=[]
+def getCertificates(domains: list,outtype: str,verbose:str,errors:list):
+    
     
     items = {}
     
     item_list= []
-        
+
     for host in domains:
-       
+        
         if "{{" in host:
             if verbose:
                 errors.append("'{}' is a variable and will not be looked up!".format(host))
@@ -185,16 +183,17 @@ def readEdgeRC():
     else:
         parser.error("The File {} does not exist!".format(home+edgerc))
 
-def papi(a: Credentials,action:str,verbose:str):
+def papi(a: Credentials,action:str,verbose:str,errors:list,config:str=None):
     http = requests.Session()
     http.auth= EdgeGridAuth(
             client_token=a.client_token,
             client_secret=a.client_secret,
             access_token=a.access_token
         )
-    validActions = ["ListGroups","ListContracts","ListProperties","GetRuleTree"]
+    validActions = ["ListGroups","ListContracts","ListProperties","GetRuleTree","SearchProperty"]
     if action not in validActions:
-        return "Error"
+        
+        parser.error("Error: PAPI Unknown Action")
     elif action == validActions[0]:
         endpoint='/papi/v1/groups'
         
@@ -203,7 +202,7 @@ def papi(a: Credentials,action:str,verbose:str):
         return json.loads(json.dumps(result.json()))
 
     elif action == validActions[2]:
-        groups=papi(a,"ListGroups",verbose)
+        groups=papi(a,"ListGroups",verbose,errors)
         group = groups['groups']['items'][0]['groupId']
         contract=groups['groups']['items'][0]['contractIds'][0]
         endpoint= '/papi/v1/properties?contractId={}&groupId={}'.format(contract,group)
@@ -211,7 +210,7 @@ def papi(a: Credentials,action:str,verbose:str):
         http.close()
         return json.loads(json.dumps(result.json()))
     elif action == validActions[3]:
-        p = papi(a,"ListProperties",verbose)
+        p = papi(a,"ListProperties",verbose,errors)
         
         endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast".format(
             p['properties']['items'][0]['propertyId'],
@@ -221,33 +220,72 @@ def papi(a: Credentials,action:str,verbose:str):
         )
         result = http.get(urljoin("https://" + a.host + "/", endpoint))
         http.close()
-        readFile(json.loads(json.dumps(result.json())) ,"API","",verbose)
+        readObject(json.loads(json.dumps(result.json())) ,"API","",verbose)
         #return json.loads(json.dumps(result.json()))    
-    http.close()
+    elif action == validActions[4]:
+        
+        endpoint='/papi/v1/search/find-by-value'
+        postbody = {}
+        postbody['propertyName'] = config
+        result = http.post(urljoin("https://" + a.host + "/", endpoint),json.dumps(postbody), headers={"Content-Type": "application/json"})
+        http.close()
+        errors.append("")
+        
+        if result.json()['versions']['items'] == []:
+            errors.append("The configuration {} was not found.".format(config))
+        else:
+            return json.loads(json.dumps(result.json()))
+        
+    # postbody = '{"createFromVersion": ' + str(p.baseVersion) + ',"createFromVersionEtag": "' + p.baseVersionEtag + '"}'
+    # outputurl = '/papi/v1/properties/' + p.propertyId + '/versions?contractId=' + p.contractid + '&groupId=' + p.groupId
+    # p.apiRequest.post(urljoin(p.apiBaseUrl, outputurl), postbody, headers={"Content-Type": "application/json"})
+    # return
+    # http.close()
     return None
 def run():
 
 
 
-
+    errors=[]
     if args['audit'] == "list":
         if args['domains'] is None:
             parser.error("--domains is requiered to provide list of domains.")
         else:
-            getCertificates(args['domains'],args['output'],args['verbose'])
+            getCertificates(args['domains'],args['output'],args['verbose'],errors)
     elif (args['audit'] == "file"):
         if (args['file'] is None):
             parser.error("--file is requiered to provide the file to audited.")
         else:
-            readFile(args['file'],args['t'],args['output'],args['verbose'])
-    #if (args['f'] is None and args['d'] is None):
+            #print(args)
+            readObject(args['file'],args['file_type'],args['output'],args['verbose'])
+    elif (args['audit'] == "config"):  
+        if args['config_name'] is None:
+            parser.error("--config-name is requiered to provide configuration to be audited.")
+        else:    
+            a = readEdgeRC()  
+            if a is None:
+                parser.error("Unable to read EdgeRc Credientials for PAPI section")
+            else:
+                #j=papi(a,"GetRuleTree",args['verbose'])
+                #print(args['config_name'])
+                #WORK IN PROGRESS [START]
+                # for i in args['config_name']:
+                #     papi(a,"SearchProperty",args['verbose'],errors,i)
+                #     o = 
+                # if o is not None:
+                #     printJson(o)
+                # else:
+                #     getCertificates([],)
+                #WORK IN PROGRESS [END]
+                #print(papi(a,"ListProperties",args['verbose'],))
+    # if (args['f'] is None and args['d'] is None):
     #    parser.error("Either -d or -f are requiered to provide list of domains.")
 
     # if args['f']:
     #     if args['t'] is None:
     #         parser.error("-f requieres -t File Type (LIST, PM)")
     #     else:
-    #         #readFile(args['f'],args['t'],args['o'],args['v'])
+    #         #readObject(args['f'],args['t'],args['o'],args['v'])
             
     #         a = readEdgeRC()
            
@@ -258,7 +296,7 @@ def run():
             
             
     else:
-        getCertificates(args['d'],args['o'],args['v'])
+        getCertificates(args['d'],args['o'],args['v'],errors)
 
 if __name__ == '__main__':
     run()
