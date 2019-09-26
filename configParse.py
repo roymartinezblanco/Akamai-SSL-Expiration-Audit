@@ -1,9 +1,7 @@
-import OpenSSL , ssl,  argparse ,json, os.path, validators, requests # , objectpath
+import OpenSSL , ssl,  argparse ,json, os.path, validators, requests 
 from datetime import datetime
 from dateutil.parser import parse
 from urllib.parse import urljoin
-from akamai.edgegrid import EdgeGridAuth
-#from urllib.parse import urljoin
 from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
 
@@ -14,8 +12,7 @@ parser.add_argument('--audit', type=str, choices=['account','config','file','lis
                     required=True)
 parser.add_argument('--domains', nargs='+', type=str, help='<Required> List of domains to query.',
                     required=False)
-#parser.add_argument('--output', type=str, help='-o JSON for json formated output',
-#                    required=False)
+
 parser.add_argument('--file-type', type=str, choices=['list','akamai'], help='File Type (list, akamai)',
                     required=False, default='akamai')  
 parser.add_argument('--file', type=str, help='File with list of domains (one per line)',
@@ -24,10 +21,11 @@ parser.add_argument('--config-name',nargs='+', type=str, help='Name or List of N
                     required=False)          
 parser.add_argument('--verbose', help='Show Errors',
                     required=False,  action='store_true')
+                    
 args = vars(parser.parse_args())
 
 ### Global Variables
-version= 0.1
+#version= 0.1
 errors = []
 items = {}
 item_list= []
@@ -44,7 +42,7 @@ def readObject(File,Ftype:str,configName:str=None):
     origins=[]
     if Ftype != "API":
         if os.path.exists(File):
-            if Ftype == "List":
+            if Ftype == "list":
                 lines = [line.rstrip('\n') for line in open(File)]
                 getCertificates(lines)
             else:
