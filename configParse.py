@@ -6,17 +6,16 @@ from akamai.edgegrid import EdgeGridAuth
 #from urllib.parse import urljoin
 from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
-#TODO: 
-    # * Update Get Certificate to return list only
-    # * Update print function to pring both bash and json and take in the two ListGroups
+
+
 
 parser = argparse.ArgumentParser(description='Akamai Cert Validity Automation Script')
 parser.add_argument('--audit', type=str, choices=['account','config','file','list'], help='Type of Audit to be done: [account,config,file,list]',
                     required=True)
 parser.add_argument('--domains', nargs='+', type=str, help='<Required> List of domains to query.',
                     required=False)
-parser.add_argument('--output', type=str, help='-o JSON for json formated output',
-                    required=False)
+#parser.add_argument('--output', type=str, help='-o JSON for json formated output',
+#                    required=False)
 parser.add_argument('--file-type', type=str, choices=['list','akamai'], help='File Type (list, akamai)',
                     required=False, default='akamai')  
 parser.add_argument('--file', type=str, help='File with list of domains (one per line)',
@@ -24,9 +23,14 @@ parser.add_argument('--file', type=str, help='File with list of domains (one per
 parser.add_argument('--config-name',nargs='+', type=str, help='Name or List of Names to be audited.)',
                     required=False)          
 parser.add_argument('--verbose', help='Show Errors',
-                    required=False, action='store_true')
+                    required=False,  action='store_true')
 args = vars(parser.parse_args())
 
+### Global Variables
+version= 0.1
+errors = []
+items = {}
+item_list= []
 
 
 class Credentials:
@@ -36,43 +40,44 @@ class Credentials:
         self.access_token = ""
         self.client_token = ""
 
-def readObject(File,Ftype:str,outtype: str,verbose:str):
-    
+def readObject(File,Ftype:str,configName:str=None):
+    origins=[]
     if Ftype != "API":
         if os.path.exists(File):
             if Ftype == "List":
                 lines = [line.rstrip('\n') for line in open(File)]
-                getCertificates(lines,outtype,verbose)
+                getCertificates(lines)
             else:
-                #print(f)
+
                 try:
                     with open(File) as handle:
                         dictdump = json.loads(handle.read())                 
                 except:
                     parser.error("Unable to Parse JSON File, please validate format.")
                 else:
-                    origins=[]
-                    finditem(dictdump,origins)
-                    getCertificates(origins,outtype,verbose)
+                    finditem(dictdump,origins,configName)
+
+                    getCertificates(origins,configName)
         else:
             parser.error("The File {} does not exist!".format(File))
      
     else:
-        origins=[]
-        finditem(File,origins)
-        getCertificates(origins,outtype,verbose)
+        if args['verbose']:
+            print("...... Reading rules for the property '{}' .".format(configName))
 
+        finditem(File,origins,configName)
+        getCertificates(origins,configName)
 
-                
-
-
-
-def finditem(obj,origins:list):
+def finditem(obj,origins:list,configName:str=None):
 
     for ok, ov in obj.items(): 
         if ok == "name" and ov == "origin":
             options = dict(obj["options"])
-            if options["originType"] != "NET_STORAGE":
+
+            if options["originType"] == "CUSTOMER":
+                if args['verbose']:
+                    print("...... Origin behavior found with the value '{}' on the configuration '{}'.".format(dict(obj["options"])["hostname"],configName))
+
                 origins.append (dict(obj["options"])["hostname"])
     for k, v in obj.items():
         if isinstance(v,dict) or isinstance(v,list):
@@ -81,32 +86,44 @@ def finditem(obj,origins:list):
                     if len(v) > 0:
                         for i in v:
                             if isinstance(i, dict):
-                                finditem(dict(i),origins)
+                                finditem(dict(i),origins,configName)
                 else:
-                    finditem(v,origins)
+                    finditem(v,origins,configName)
 
-def printJson(output):
+def printJson():
+ 
+    if args['verbose']:
+        print("...... Printing JSON.")     
+        print("...... [end] {}".format(datetime.now()))     
+    items['items'] = item_list
+    if args['audit'] == "list":
+        items['errors'] = errors
+    print(json.dumps(items, indent = 4, sort_keys=False))
 
-    print(json.dumps(output, indent=4, sort_keys=True))
-    
     return
-def getCertificates(domains: list,outtype: str,verbose:str,errors:list):
+def getCertificates(domains: list,configName:str=None):
     
-    
-    items = {}
-    
-    item_list= []
-
+    currentConfig={}
+    if args['audit'] != "list" and args['audit'] != "file":
+        currentConfig['propertyName'] = configName
+    certs=[]
+    er=[]
     for host in domains:
-        
+        if args['verbose']:
+            print("...... Looking up the certificate for '{}' ".format(host))
         if "{{" in host:
-            if verbose:
-                errors.append("'{}' is a variable and will not be looked up!".format(host))
+            if args['verbose']:
+                print("...... [warning] '{}' is a variable and will not be looked up!".format(host))
+            er.append("'{}' is a variable and will not be looked up!".format(host))
         else:
             if validators.domain(host) != True:
-                if verbose:
-                    errors.append("'{}' is not a valid domain!".format(host))
                 
+                if args['verbose']:
+                    if configName is not None:
+                        print("...... [warning] '{}' is not a valid domain, on the configuration'{}'!".format(host,configName))
+                    else:
+                        print("...... [warning] '{}' is not a valid domain!".format(host))
+                er.append("'{}' is not a valid domain!".format(host))
                 continue
             try:
                 hostname = host
@@ -117,43 +134,58 @@ def getCertificates(domains: list,outtype: str,verbose:str,errors:list):
                 certificate = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
                 x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,certificate)
             except:
-                if verbose:
-                    errors.append("Unable to connect to '{}'!".format(host))
+                if args['verbose']:
+                    print("...... [warning] Can't connect to '{}'!".format(host))
+                er.append("Can't connect to '{}'!".format(host))
                 continue
             else:
                 serial= '{0:x}'.format(x509.get_serial_number())
-                #print(serial)
+                
                 exp_date = str(x509.get_notAfter().decode('utf-8'))
                 dt = parse(exp_date)
 
                 daystoexp=dt.replace(tzinfo=None)-datetime.utcnow()
 
-                if outtype == "JSON":
-                    item = {}
-                    item['Domain'] = str(host)
-                    item['Serial'] = str(serial)
-                    item['ExpDate'] =  str(dt.date())
-                    item['DaysLeft']  =  daystoexp.days
-                    json_data = json.dumps(item)
-                    item_list.append(json_data)
-                else:
-                    print("SSL Certificate for {}, will be expire on (DD-MM-YYYY): {}, {} days from now.".format(host, dt.date(),daystoexp.days))   
 
-    if outtype == "JSON":
+                item = {}
+                item['Domain'] = str(host)
+                item['Serial'] = str(serial)
+                item['ExpDate'] =  str(dt.date())
+                item['DaysLeft']  =  daystoexp.days
+ 
+                certs.append(item)
+    if domains == []:
+
+        if configName is not None:
+            er.append("No customer origins found on the configuration '{}'.".format(configName))
+            if args['verbose']:
+                print("...... [warning] No customer origins found on the configuration '{}.".format(configName))
+
+        else:
+            er.append("No customer origins found.")
+            if args['verbose']:
+                print("...... [warning] No customer origins found.")
+
+
+    if certs != []:
+        currentConfig['certicates'] = certs
+
         
-        items['Certificates'] = item_list
-        if verbose:
-            items['Errors'] = errors
-        printJson(items)
-    else:
-        if verbose:
-            print("The Following Errors Occured: {}".format(errors))
+    if er != []:
+        if args['audit'] != "list":
+            currentConfig['errors'] = er
+        else:
+            errors.append(er)
+    item_list.append(currentConfig)
+
     return
 
 def readEdgeRC():
     a = Credentials()
     home = str(Path.home())
     edgerc = '/.edgerc'
+    if args['verbose']:
+        print("...... Reading Edgerc {}.".format(home+edgerc))
     if os.path.exists(home+edgerc):
         with open(home+edgerc) as fp:
             selectedProfile=False
@@ -181,9 +213,11 @@ def readEdgeRC():
         fp.close()
         return None
     else:
+        if args['verbose']:
+            print("...... [warning] The File {} does not exist!".format(home+edgerc))
         parser.error("The File {} does not exist!".format(home+edgerc))
 
-def papi(a: Credentials,action:str,verbose:str,errors:list,config:str=None):
+def papi(a: Credentials,action:str,config:str=None,p:list=None):
     http = requests.Session()
     http.auth= EdgeGridAuth(
             client_token=a.client_token,
@@ -194,70 +228,125 @@ def papi(a: Credentials,action:str,verbose:str,errors:list,config:str=None):
     if action not in validActions:
         
         parser.error("Error: PAPI Unknown Action")
+    #ListGroups
     elif action == validActions[0]:
+        if args['verbose']:
+            print("...... Listing account groups with PAPI.")
         endpoint='/papi/v1/groups'
         
         result = http.get(urljoin("https://" + a.host + "/", endpoint))
         http.close()
         return json.loads(json.dumps(result.json()))
-
+    #ListProperties
     elif action == validActions[2]:
-        groups=papi(a,"ListGroups",verbose,errors)
-        group = groups['groups']['items'][0]['groupId']
-        contract=groups['groups']['items'][0]['contractIds'][0]
-        endpoint= '/papi/v1/properties?contractId={}&groupId={}'.format(contract,group)
-        result = http.get(urljoin("https://" + a.host + "/", endpoint))
-        http.close()
-        return json.loads(json.dumps(result.json()))
+        gps = papi(a,"ListGroups")
+        for gp in gps['groups']['items']:
+            for contract in gp['contractIds']:
+                if args['verbose']:
+                    print("...... Listing properties in '{}'/'{}' with PAPI.".format(gp['groupId'],contract))
+ 
+                endpoint= '/papi/v1/properties?contractId={}&groupId={}'.format(contract,gp['groupId'])
+                result = http.get(urljoin("https://" + a.host + "/", endpoint))
+                http.close()
+                response = json.loads(json.dumps(result.json()))
+                for p in response['properties']['items']:
+
+                    if p['productionVersion'] is None or p is None:
+                        #print(False)
+                        item={}
+                        er=[]
+                        er.append("The configuration has no active version in production.")
+                        if args['verbose']:
+                            print("...... [warning] The configuration '{}' has no active version in production.".format(p['propertyName']))
+                        item['propertyName']=p['propertyName']
+                        item['errors']=er
+                        item_list.append(item)
+                    else:
+                        #print("here")
+                        p['propertyVersion']=p['productionVersion']
+                        del p['productionVersion']
+                        papi(a,"GetRuleTree","",p)
+
     elif action == validActions[3]:
-        p = papi(a,"ListProperties",verbose,errors)
-        
+
+
+        if args['verbose']:
+            print("...... Getting rule tree for the '{}' property with PAPI.".format(p['propertyName']))
+
         endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast".format(
-            p['properties']['items'][0]['propertyId'],
-            p['properties']['items'][0]['latestVersion'],
-            p['properties']['items'][0]['contractId'],
-            p['properties']['items'][0]['groupId']
+            p['propertyId'],
+            p['propertyVersion'],
+            p['contractId'],
+            p['groupId']
         )
+ 
         result = http.get(urljoin("https://" + a.host + "/", endpoint))
         http.close()
-        readObject(json.loads(json.dumps(result.json())) ,"API","",verbose)
-        #return json.loads(json.dumps(result.json()))    
+
+        readObject(json.loads(json.dumps(result.json())) ,"API",p['propertyName'])
+
     elif action == validActions[4]:
-        
+        if args['verbose']:
+            print("...... Looking for the configuration '{}'.".format(config))
         endpoint='/papi/v1/search/find-by-value'
         postbody = {}
         postbody['propertyName'] = config
         result = http.post(urljoin("https://" + a.host + "/", endpoint),json.dumps(postbody), headers={"Content-Type": "application/json"})
         http.close()
-        errors.append("")
+
         
         if result.json()['versions']['items'] == []:
-            errors.append("The configuration {} was not found.".format(config))
+            item={}
+            er=[]
+            item['propertyName']=config
+            if args['verbose']:
+                    print("...... [warning] The configuration '{}' was not found.".format(config))
+            er.append("The configuration was not found.")
+            item['errors']=er
+             
+            item_list.append(item)
+            return 
         else:
+            if args['verbose']:
+                print("...... [warning] The configuration '{}' was found.".format(config))
+            prodversion = None
+            for i in result.json()['versions']['items']:
+                if i['productionStatus'] == "ACTIVE":
+                    prodversion = True
+                    papi(a,"GetRuleTree","",i)
+            if prodversion is None:
+                item={}
+                er=[]
+                if args['verbose']:
+                    print("...... [warning] The configuration '{}' has no active version in production.".format(config))
+                er.append("The configuration has no active version in production.")
+                item['propertyName']=config
+                item['errors']=er
+             
+                item_list.append(item)
+  
+                
             return json.loads(json.dumps(result.json()))
         
-    # postbody = '{"createFromVersion": ' + str(p.baseVersion) + ',"createFromVersionEtag": "' + p.baseVersionEtag + '"}'
-    # outputurl = '/papi/v1/properties/' + p.propertyId + '/versions?contractId=' + p.contractid + '&groupId=' + p.groupId
-    # p.apiRequest.post(urljoin(p.apiBaseUrl, outputurl), postbody, headers={"Content-Type": "application/json"})
-    # return
-    # http.close()
+
     return None
 def run():
-
-
-
-    errors=[]
+    if args['verbose']:
+        print("...... [start] {}".format(datetime.now()))
     if args['audit'] == "list":
         if args['domains'] is None:
             parser.error("--domains is requiered to provide list of domains.")
         else:
-            getCertificates(args['domains'],args['output'],args['verbose'],errors)
+            getCertificates(args['domains'])
+            printJson()
     elif (args['audit'] == "file"):
         if (args['file'] is None):
             parser.error("--file is requiered to provide the file to audited.")
         else:
-            #print(args)
-            readObject(args['file'],args['file_type'],args['output'],args['verbose'])
+
+            readObject(args['file'],args['file_type'])
+            printJson()
+
     elif (args['audit'] == "config"):  
         if args['config_name'] is None:
             parser.error("--config-name is requiered to provide configuration to be audited.")
@@ -265,39 +354,20 @@ def run():
             a = readEdgeRC()  
             if a is None:
                 parser.error("Unable to read EdgeRc Credientials for PAPI section")
+
             else:
-                #j=papi(a,"GetRuleTree",args['verbose'])
-                #print(args['config_name'])
-                #WORK IN PROGRESS [START]
-                # for i in args['config_name']:
-                #     papi(a,"SearchProperty",args['verbose'],errors,i)
-                #     o = 
-                # if o is not None:
-                #     printJson(o)
-                # else:
-                #     getCertificates([],)
-                #WORK IN PROGRESS [END]
-                #print(papi(a,"ListProperties",args['verbose'],))
-    # if (args['f'] is None and args['d'] is None):
-    #    parser.error("Either -d or -f are requiered to provide list of domains.")
+                for i in args['config_name']:
 
-    # if args['f']:
-    #     if args['t'] is None:
-    #         parser.error("-f requieres -t File Type (LIST, PM)")
-    #     else:
-    #         #readObject(args['f'],args['t'],args['o'],args['v'])
-            
-    #         a = readEdgeRC()
-           
+                    papi(a,"SearchProperty",i)
+                    
+                printJson()
+    elif (args['audit'] == "account"):
+        a = readEdgeRC() 
 
-    #         if a is None:
-    #             parser.error("Unable to read EdgeRc Credientials for PAPI section")
-    #         j=papi(a,"GetRuleTree",args['v'])
-            
-            
-    else:
-        getCertificates(args['d'],args['o'],args['v'],errors)
+        papi(a,"ListProperties")
+        printJson()
 
+   
 if __name__ == '__main__':
     run()
 
