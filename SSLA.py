@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from urllib.parse import urljoin
 from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
-from pygments import highlight, lexers, formatters
+#from pygments import highlight, lexers, formatters
 
 
 parser = argparse.ArgumentParser(description='Akamai Cert Validity Automation Script')
@@ -98,15 +98,15 @@ def printJson():
     items['items'] = item_list
     if args['audit'] == "list":
         items['errors'] = errors
-    formatted_json = json.dumps(items, sort_keys=True, indent=4)
+    formatted_json = json.dumps(items, sort_keys=False, indent=4)
     #colorful_json= pygments.highlight(formatted_json, pygments.lexers.data.JsonLexer(),formatters.html())
     #print(
-    colorful_json = highlight(formatted_json.encode("utf-8"), lexers.JsonLexer(), formatters.Terminal256Formatter())
+    #colorful_json = highlight(formatted_json.encode("utf-8"), lexers.JsonLexer(), formatters.Terminal256Formatter())
     #colorful_json = highlight(json.dumps(items, indent = 4, sort_keys=False), lexers.data.JsonLexer(), formatters.terminal.Formatter())
 
-    print(colorful_json)
+    print(formatted_json)
 
-   # return
+
 def getCertificates(domains: list,configName:str=None):
     
     currentConfig={}
@@ -314,7 +314,7 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
             return 
         else:
             if args['verbose']:
-                print("...... [warning] The configuration '{}' was found.".format(config))
+                print("...... The configuration '{}' was found.".format(config))
             prodversion = None
             for i in result.json()['versions']['items']:
                 if i['productionStatus'] == "ACTIVE":
