@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from urllib.parse import urljoin
 from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
-
+from pygments import highlight, lexers, formatters
 
 
 parser = argparse.ArgumentParser(description='Akamai Cert Validity Automation Script')
@@ -43,6 +43,8 @@ def readObject(File,Ftype:str,configName:str=None):
     if Ftype != "API":
         if os.path.exists(File):
             if Ftype == "list":
+                if args['verbose']:
+                    print("...... Reading file '{}'.".format(File))
                 lines = [line.rstrip('\n') for line in open(File)]
                 getCertificates(lines)
             else:
@@ -89,16 +91,22 @@ def finditem(obj,origins:list,configName:str=None):
                     finditem(v,origins,configName)
 
 def printJson():
- 
+    
     if args['verbose']:
         print("...... Printing JSON.")     
         print("...... [end] {}".format(datetime.now()))     
     items['items'] = item_list
     if args['audit'] == "list":
         items['errors'] = errors
-    print(json.dumps(items, indent = 4, sort_keys=False))
+    formatted_json = json.dumps(items, sort_keys=True, indent=4)
+    #colorful_json= pygments.highlight(formatted_json, pygments.lexers.data.JsonLexer(),formatters.html())
+    #print(
+    colorful_json = highlight(formatted_json.encode("utf-8"), lexers.JsonLexer(), formatters.Terminal256Formatter())
+    #colorful_json = highlight(json.dumps(items, indent = 4, sort_keys=False), lexers.data.JsonLexer(), formatters.terminal.Formatter())
 
-    return
+    print(colorful_json)
+
+   # return
 def getCertificates(domains: list,configName:str=None):
     
     currentConfig={}
