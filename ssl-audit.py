@@ -21,6 +21,10 @@ parser.add_argument('--config-name',nargs='+', type=str, help='Name or List of N
                     required=False)          
 parser.add_argument('--verbose', help='Show Errors',
                     required=False,  action='store_true')
+parser.add_argument('--section', type=str, help='File with list of domains (one per line)',
+                    required=False)
+parser.add_argument('--switch-key', type=str, help='File with list of domains (one per line)',
+                    required=False)        
                     
 args = vars(parser.parse_args())
 
@@ -94,8 +98,9 @@ def printJson():
     
     if args['verbose']:
         print("...... Printing JSON.")     
-        print("...... [end] {}".format(datetime.now()))     
-    items['items'] = item_list
+        print("...... [end] {}".format(datetime.now()))    
+    if str(item_list) != "[{}]":
+        items['items'] = item_list
     if args['audit'] == "list":
         items['errors'] = errors
     formatted_json = json.dumps(items, sort_keys=False, indent=4)
@@ -134,16 +139,16 @@ def getCertificates(domains: list,configName:str=None):
             try:
                 hostname = host
                 port = 443
-                conn = ssl.create_connection((hostname, port))
+                conn = ssl.create_connection((hostname,port), timeout=10)
+                #conn.settimeout(10)
                 context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
                 sock = context.wrap_socket(conn, server_hostname=hostname)
                 certificate = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
                 x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,certificate)
-            except:
+            except BaseException as e:
                 if args['verbose']:
-                    print("...... [warning] Can't connect to '{}'!".format(host))
-                er.append("Can't connect to '{}'!".format(host))
-                continue
+                    print("...... [warning] Can't connect to '{}' error: {}".format(host,str(e)))
+                er.append("Can't connect to '{}' error: {}".format(host,str(e)))
             else:
                 serial= '{0:x}'.format(x509.get_serial_number())
                 
@@ -187,6 +192,12 @@ def getCertificates(domains: list,configName:str=None):
     return
 
 def readEdgeRC():
+    
+    if args['section']:
+        section='['+args['section']+']'
+    else: 
+        section='[default]'
+
     a = Credentials()
     home = str(Path.home())
     edgerc = '/.edgerc'
@@ -198,11 +209,11 @@ def readEdgeRC():
             line = fp.readline()
             while line:
                 line = fp.readline()
-                if line.strip().lower() == "[papi]":
+                if line.strip().lower() == section:
                     selectedProfile=True
                 if line.strip() == "":
                     selectedProfile=False
-                if selectedProfile == True and line.strip().lower() != "[papi]":
+                if selectedProfile == True and line.strip().lower() != section:
                     key,value=line.split(" = ")
          
                     if key== "client_secret":
@@ -238,11 +249,13 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
     elif action == validActions[0]:
         if args['verbose']:
             print("...... Listing account groups with PAPI.")
-        endpoint='/papi/v1/groups'
         
+        if args['switch_key']:
+            endpoint='/papi/v1/groups?accountSwitchKey={}'.format(args['switch_key'])
+        else:
+            endpoint= '/papi/v1/groups'
         result = http.get(urljoin("https://" + a.host + "/", endpoint))
         http.close()
-        return json.loads(json.dumps(result.json()))
     #ListProperties
     elif action == validActions[2]:
         gps = papi(a,"ListGroups")
@@ -251,7 +264,10 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
                 if args['verbose']:
                     print("...... Listing properties in '{}'/'{}' with PAPI.".format(gp['groupId'],contract))
  
-                endpoint= '/papi/v1/properties?contractId={}&groupId={}'.format(contract,gp['groupId'])
+                if args['switch_key']:
+                    endpoint= '/papi/v1/properties?contractId={}&groupId={}&accountSwitchKey={}'.format(contract,gp['groupId'],args['switch_key'])
+                else:
+                    endpoint= '/papi/v1/properties?contractId={}&groupId={}'.format(contract,gp['groupId'])
                 result = http.get(urljoin("https://" + a.host + "/", endpoint))
                 http.close()
                 response = json.loads(json.dumps(result.json()))
@@ -278,13 +294,23 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
 
         if args['verbose']:
             print("...... Getting rule tree for the '{}' property with PAPI.".format(p['propertyName']))
+        if args['switch_key']:
+           
+            endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast&accountSwitchKey={}".format(
+                p['propertyId'],
+                p['propertyVersion'],
+                p['contractId'],
+                p['groupId'],
+                args['switch_key']
+            )
+        else:
+            endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast".format(
+                p['propertyId'],
+                p['propertyVersion'],
+                p['contractId'],
+                p['groupId']
+            )
 
-        endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast".format(
-            p['propertyId'],
-            p['propertyVersion'],
-            p['contractId'],
-            p['groupId']
-        )
  
         result = http.get(urljoin("https://" + a.host + "/", endpoint))
         http.close()
@@ -294,7 +320,10 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
     elif action == validActions[4]:
         if args['verbose']:
             print("...... Looking for the configuration '{}'.".format(config))
-        endpoint='/papi/v1/search/find-by-value'
+        if args['switch_key']:
+            endpoint='/papi/v1/search/find-by-value?accountSwitchKey={}'.format(args['switch_key'])
+        else:
+            endpoint='/papi/v1/search/find-by-value'
         postbody = {}
         postbody['propertyName'] = config
         result = http.post(urljoin("https://" + a.host + "/", endpoint),json.dumps(postbody), headers={"Content-Type": "application/json"})
