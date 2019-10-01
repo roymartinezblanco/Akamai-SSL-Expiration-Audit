@@ -1,4 +1,10 @@
 # Akamai SSL Expiration Audit
+<h1 align="center">
+  <br>
+      <img src="assets/ssl-audit-domain-list.png">
+  <br>
+</h1>
+
 ## What is this?
  Audit Akamai Property Manager Configurations and DNS Listo for Expiration dates.
 
