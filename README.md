@@ -140,6 +140,8 @@ For multi-account users if you have **switch key** credentials you can specify t
 ## Contribute
 Want to contribute? Sure why not! just let me know!
 
+## Author
+Me https://roymartinez.dev/
 ## Licensing
 I am providing code and resources in this repository to you under an open-source license. Because this is my repository, the license you receive to my code and resources is from me and not my employer (Akamai).
 
