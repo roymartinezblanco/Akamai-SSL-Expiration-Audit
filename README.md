@@ -57,7 +57,7 @@ Currently, for version 0.1 this script <span style="color:red">**will not look a
 ## How do I use it?
 
 
-| Argument        | Required           | Value Type | Description    |
+| Script Arguments        | Required           | Value Type | Description    |
 | :---------------------- |:-------------:|:-------------:| :-------------|
 | --audit       | * | string | Allowed values: {account,config,file,list}. This field defines the type of audit to used. |
 | --domains     | with audit type list. | list | Space delimited list of DNS records.|
