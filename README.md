@@ -2,13 +2,16 @@
 
 ## What is this?
 A tool to audit Akamai Property Manager Configurations (Local and Remote) and DNS Record List for SSL Certificate Expiration dates.
+
+<span style="color:yellow">The goal</span>, behind this project is to provide an easy way to audit  <span style="color:yellow">**audit ssl certificate expiration date**</span>, this is to help us keep an eye over any soon to expire certificate and avoid possible outages due to lack of visibility.
+
 <h1 align="center">
   <br>
       <img src="assets/ssl-audit-domain-list.png">
   <br>
 </h1>
 
-<span style="color:yellow">The goal</span>, behaind this project is to provide an easy way to audit  <span style="color:yellow">**audit ssl certificate expiration date**</span>, this is to help us keep an eye over any soon to expire certificate and avoid possible outages due to lack of visibility.
+
 
 ## Who is this for?
 This project will help mostly Akamai customers but the Audit list functionality will also be of use to any person/company that wants to see when their SSL Certificates might expire. ...(Anyone)
@@ -23,7 +26,31 @@ This project will help mostly Akamai customers but the Audit list functionality 
     * List can be provided as argument (see "How to use")
 * Account-wide Audit
 * Switch Key Integration (for multi-account management) 
-##Prerequisites/Requirements
+
+## Prerequisites/Requirements
+I've provided the requirements document to help install all dependencies.
+
+``` pip install -r requirements.txt```
+
+    asn1crypto==0.24.0
+    certifi==2019.9.11
+    cffi==1.12.3
+    chardet==3.0.4
+    cryptography==2.7
+    decorator==4.4.0
+    edgegrid-python==1.1.1
+    idna==2.8
+    ndg-httpsclient==0.5.1
+    pyasn1==0.4.7
+    pycparser==2.19
+    pyOpenSSL==19.0.0
+    python-dateutil==2.8.0
+    requests==2.22.0
+    six==1.12.0
+    urllib3==1.25.6
+    validators==0.14.0
+
+
 ## Limitations
 Currently, for version 0.1 this script <span style="color:red">**will not look at variables within the origin behaviors**</span> (Property Manager) since this adds a lot of complexity. This is because as an example: a variable (origin) can be made from other variables that are only available in execution time.
 
@@ -31,7 +58,7 @@ Currently, for version 0.1 this script <span style="color:red">**will not look a
 
 
 | Argument        | Required           | Value Type | Description    |
-| :------------- |:-------------:|:-------------:| :-------------|
+| :---------------------- |:-------------:|:-------------:| :-------------|
 | --audit       | * | string | Allowed values: {account,config,file,list}. This field defines the type of audit to used. |
 | --domains     | with audit type list. | list | Space delimited list of DNS records.|
 | --file        | with audit type "file".  | string | Path to the file to be parsed. |
@@ -109,30 +136,6 @@ For multi-account users if you have **switch key** credentials you can specify t
       <img src="assets/ssl-audit-config.png">
   <br>
 </h1>
-
-## Installation
-
-I've provided the requirements document to help install all dependencies.
-
-``` pip install -r requirements.txt```
-
-    asn1crypto==0.24.0
-    certifi==2019.9.11
-    cffi==1.12.3
-    chardet==3.0.4
-    cryptography==2.7
-    decorator==4.4.0
-    edgegrid-python==1.1.1
-    idna==2.8
-    ndg-httpsclient==0.5.1
-    pyasn1==0.4.7
-    pycparser==2.19
-    pyOpenSSL==19.0.0
-    python-dateutil==2.8.0
-    requests==2.22.0
-    six==1.12.0
-    urllib3==1.25.6
-    validators==0.14.0
 
 ## Contribute
 Want to contribute? Sure why not! just let me know!
