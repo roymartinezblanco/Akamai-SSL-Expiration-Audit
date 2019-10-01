@@ -4,13 +4,12 @@ from dateutil.parser import parse
 from urllib.parse import urljoin
 from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
-#from pygments import highlight, lexers, formatters
 
 
-parser = argparse.ArgumentParser(description='Akamai Cert Validity Automation Script')
-parser.add_argument('--audit', type=str, choices=['account','config','file','list'], help='Type of Audit to be done: [account,config,file,list]',
-                    required=True)
-parser.add_argument('--domains', nargs='+', type=str, help='<Required> List of domains to query.',
+parser = argparse.ArgumentParser(description='Certificate Expiration Audit\nLatest version and documentation can be found here:\nhttps://github.com/roymartinezblanco/Akamai-SSL-Expiration-Audit',formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('--audit', type=str, choices=['account','config','file','list'], help='*required* Type of Audit to be done: [account,config,file,list]',
+                    required=False)
+parser.add_argument('--domains', nargs='+', type=str, help='List of domains to query.',
                     required=False)
 
 parser.add_argument('--file-type', type=str, choices=['list','akamai'], help='File Type (list, akamai)',
@@ -19,11 +18,11 @@ parser.add_argument('--file', type=str, help='File with list of domains (one per
                     required=False)         
 parser.add_argument('--config-name',nargs='+', type=str, help='Name or List of Names to be audited.)',
                     required=False)          
-parser.add_argument('--verbose', help='Show Errors',
+parser.add_argument('--verbose', help='Show debug information',
                     required=False,  action='store_true')
-parser.add_argument('--section', type=str, help='File with list of domains (one per line)',
+parser.add_argument('--section', type=str, help='Select a Edgerc section other than the Default',
                     required=False)
-parser.add_argument('--switch-key', type=str, help='File with list of domains (one per line)',
+parser.add_argument('--account-key', type=str, help='Account ID to Query for multi account management (switch key)',
                     required=False)        
                     
 args = vars(parser.parse_args())
@@ -98,16 +97,13 @@ def printJson():
     
     if args['verbose']:
         print("...... Printing JSON.")     
-        print("...... [end] {}".format(datetime.now()))    
-    if str(item_list) != "[{}]":
+        print("...... [end] {}".format(datetime.now()))   
+    if item_list[0] != {}:
         items['items'] = item_list
     if args['audit'] == "list":
-        items['errors'] = errors
+        if len(errors) != 0:
+            items['errors'] = errors
     formatted_json = json.dumps(items, sort_keys=False, indent=4)
-    #colorful_json= pygments.highlight(formatted_json, pygments.lexers.data.JsonLexer(),formatters.html())
-    #print(
-    #colorful_json = highlight(formatted_json.encode("utf-8"), lexers.JsonLexer(), formatters.Terminal256Formatter())
-    #colorful_json = highlight(json.dumps(items, indent = 4, sort_keys=False), lexers.data.JsonLexer(), formatters.terminal.Formatter())
 
     print(formatted_json)
 
@@ -250,8 +246,8 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
         if args['verbose']:
             print("...... Listing account groups with PAPI.")
         
-        if args['switch_key']:
-            endpoint='/papi/v1/groups?accountSwitchKey={}'.format(args['switch_key'])
+        if args['account_key']:
+            endpoint='/papi/v1/groups?accountSwitchKey={}'.format(args['account_key'])
         else:
             endpoint= '/papi/v1/groups'
         result = http.get(urljoin("https://" + a.host + "/", endpoint))
@@ -264,8 +260,8 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
                 if args['verbose']:
                     print("...... Listing properties in '{}'/'{}' with PAPI.".format(gp['groupId'],contract))
  
-                if args['switch_key']:
-                    endpoint= '/papi/v1/properties?contractId={}&groupId={}&accountSwitchKey={}'.format(contract,gp['groupId'],args['switch_key'])
+                if args['account_key']:
+                    endpoint= '/papi/v1/properties?contractId={}&groupId={}&accountSwitchKey={}'.format(contract,gp['groupId'],args['account_key'])
                 else:
                     endpoint= '/papi/v1/properties?contractId={}&groupId={}'.format(contract,gp['groupId'])
                 result = http.get(urljoin("https://" + a.host + "/", endpoint))
@@ -294,14 +290,14 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
 
         if args['verbose']:
             print("...... Getting rule tree for the '{}' property with PAPI.".format(p['propertyName']))
-        if args['switch_key']:
+        if args['account_key']:
            
             endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast&accountSwitchKey={}".format(
                 p['propertyId'],
                 p['propertyVersion'],
                 p['contractId'],
                 p['groupId'],
-                args['switch_key']
+                args['account_key']
             )
         else:
             endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast".format(
@@ -320,8 +316,8 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
     elif action == validActions[4]:
         if args['verbose']:
             print("...... Looking for the configuration '{}'.".format(config))
-        if args['switch_key']:
-            endpoint='/papi/v1/search/find-by-value?accountSwitchKey={}'.format(args['switch_key'])
+        if args['account_key']:
+            endpoint='/papi/v1/search/find-by-value?accountSwitchKey={}'.format(args['account_key'])
         else:
             endpoint='/papi/v1/search/find-by-value'
         postbody = {}
@@ -366,17 +362,19 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
 
     return None
 def run():
+    if not args['audit']:
+        parser.print_help()
     if args['verbose']:
         print("...... [start] {}".format(datetime.now()))
     if args['audit'] == "list":
         if args['domains'] is None:
-            parser.error("--domains is requiered to provide list of domains.")
+            parser.error("--domains is required to provide list of domains.")
         else:
             getCertificates(args['domains'])
             printJson()
     elif (args['audit'] == "file"):
         if (args['file'] is None):
-            parser.error("--file is requiered to provide the file to audited.")
+            parser.error("--file is required to provide the file to audited.")
         else:
 
             readObject(args['file'],args['file_type'])
@@ -384,11 +382,11 @@ def run():
 
     elif (args['audit'] == "config"):  
         if args['config_name'] is None:
-            parser.error("--config-name is requiered to provide configuration to be audited.")
+            parser.error("--config-name is required to provide configuration to be audited.")
         else:    
             a = readEdgeRC()  
             if a is None:
-                parser.error("Unable to read EdgeRc Credientials for PAPI section")
+                parser.error("Unable to read EdgeRc Credentials for PAPI section")
 
             else:
                 for i in args['config_name']:
