@@ -3,7 +3,7 @@
 ## What is this?
 A tool to audit Akamai Property Manager Configurations (Local and Remote) and DNS Record List for SSL Certificate Expiration dates.
 
-<span style="color:yellow">The goal</span>, behind this project is to provide an easy way to audit  <span style="color:yellow">**audit ssl certificate expiration date**</span>, this is to help us keep an eye over any soon to expire certificate and avoid possible outages due to lack of visibility.
+<span style="color:yellow">The goal</span> behind this project is to provide an easy way to audit  <span style="color:yellow">**audit ssl certificate expiration date**</span>, this is to help us keep an eye over any soon to expire certificate and avoid possible outages due to lack of visibility.
 
 <h1 align="center">
   <br>
