@@ -1,0 +1,2 @@
+Mon, 07 Oct 2019 10:47:36 INFO     [start] 2019-10-07 10:47:36.785440
+Mon, 07 Oct 2019 10:47:37 ERROR    Can't connect to 'foo.dev' error: [Errno 8] nodename nor servname provided, or not known

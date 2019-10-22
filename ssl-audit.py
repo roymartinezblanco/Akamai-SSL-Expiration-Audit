@@ -1,10 +1,14 @@
-import OpenSSL , ssl,  argparse ,json, os.path, validators, requests 
+import OpenSSL , ssl,  argparse ,json, os.path, validators, requests, logging
 from datetime import datetime
 from dateutil.parser import parse
 from urllib.parse import urljoin
 from akamai.edgegrid import EdgeGridAuth
 from pathlib import Path
 
+#TODO: FIX logger format
+#turn off logger
+#send ouput to tmp file
+#improve help documentation
 
 parser = argparse.ArgumentParser(description='Certificate Expiration Audit\nLatest version and documentation can be found here:\nhttps://github.com/roymartinezblanco/Akamai-SSL-Expiration-Audit',formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('--audit', type=str, choices=['account','config','file','list'], help='*required* Type of Audit to be done: [account,config,file,list]',
@@ -32,7 +36,7 @@ args = vars(parser.parse_args())
 errors = []
 items = {}
 item_list= []
-
+logger = logging.getLogger("SSL-AUDIT")
 
 class Credentials:
     def __init__(self):
@@ -41,13 +45,29 @@ class Credentials:
         self.access_token = ""
         self.client_token = ""
 
+def configure_logging():
+    logger.setLevel(logging.DEBUG)
+    # Format for our loglines
+    formatter = logging.Formatter("[%(asctime)s] - %(name)s - %(levelname)s - %(message)s")
+    # Setup console logging
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    # Setup file logging as well
+    # fh = logging.FileHandler(LOG_FILENAME)
+    # fh.setLevel(logging.INFO)
+    # fh.setFormatter(formatter)
+    # logger.addHandler(fh)
+
 def readObject(File,Ftype:str,configName:str=None):
     origins=[]
     if Ftype != "API":
         if os.path.exists(File):
             if Ftype == "list":
                 if args['verbose']:
-                    print("...... Reading file '{}'.".format(File))
+                    #print("...... Reading file '{}'.".format(File))
+                    logger.debug("Reading file '{}'.".format(File))
                 lines = [line.rstrip('\n') for line in open(File)]
                 getCertificates(lines)
             else:
@@ -58,7 +78,7 @@ def readObject(File,Ftype:str,configName:str=None):
                 except:
                     parser.error("Unable to Parse JSON File, please validate format.")
                 else:
-                    finditem(dictdump,origins,configName)
+                    findOrigins(dictdump,origins,configName)
 
                     getCertificates(origins,configName)
         else:
@@ -66,12 +86,13 @@ def readObject(File,Ftype:str,configName:str=None):
      
     else:
         if args['verbose']:
-            print("...... Reading rules for the property '{}' .".format(configName))
+   
+            logger.debug("Reading rules for the property '{}' .".format(configName))
 
-        finditem(File,origins,configName)
+        findOrigins(File,origins,configName)
         getCertificates(origins,configName)
 
-def finditem(obj,origins:list,configName:str=None):
+def findOrigins(obj,origins:list,configName:str=None):
 
     for ok, ov in obj.items(): 
         if ok == "name" and ov == "origin":
@@ -79,8 +100,8 @@ def finditem(obj,origins:list,configName:str=None):
 
             if options["originType"] == "CUSTOMER":
                 if args['verbose']:
-                    print("...... Origin behavior found with the value '{}' on the configuration '{}'.".format(dict(obj["options"])["hostname"],configName))
-
+       
+                    logger.debug("Origin behavior found with the value '{}' on the configuration '{}'.".format(dict(obj["options"])["hostname"],configName))
                 origins.append (dict(obj["options"])["hostname"])
     for k, v in obj.items():
         if isinstance(v,dict) or isinstance(v,list):
@@ -89,15 +110,18 @@ def finditem(obj,origins:list,configName:str=None):
                     if len(v) > 0:
                         for i in v:
                             if isinstance(i, dict):
-                                finditem(dict(i),origins,configName)
+                                findOrigins(dict(i),origins,configName)
                 else:
-                    finditem(v,origins,configName)
+                    findOrigins(v,origins,configName)
 
 def printJson():
     
     if args['verbose']:
-        print("...... Printing JSON.")     
-        print("...... [end] {}".format(datetime.now()))   
+        logger.debug("Printing JSON.")
+        logger.debug("[end]")
+    if len(item_list) == 0:
+        logger.error("No output generated to print!")
+        return None
     if item_list[0] != {}:
         items['items'] = item_list
     if args['audit'] == "list":
@@ -117,43 +141,44 @@ def getCertificates(domains: list,configName:str=None):
     er=[]
     for host in domains:
         if args['verbose']:
-            print("...... Looking up the certificate for '{}' ".format(host))
+
+            logger.debug("Looking up the certificate for '{}' ".format(host))
         if "{{" in host:
             if args['verbose']:
-                print("...... [warning] '{}' is a variable and will not be looked up!".format(host))
+
+                logger.warning("'{}' is a variable and will not be looked up!".format(host))
             er.append("'{}' is a variable and will not be looked up!".format(host))
         else:
             if validators.domain(host) != True:
                 
                 if args['verbose']:
                     if configName is not None:
-                        print("...... [warning] '{}' is not a valid domain, on the configuration'{}'!".format(host,configName))
+          
+                         logger.warning("'{}' is not a valid domain, on the configuration'{}'!".format(host,configName))
                     else:
-                        print("...... [warning] '{}' is not a valid domain!".format(host))
+           
+                         logger.warning("'{}' is not a valid domain!".format(host))
                 er.append("'{}' is not a valid domain!".format(host))
                 continue
             try:
                 hostname = host
                 port = 443
                 conn = ssl.create_connection((hostname,port), timeout=10)
-                #conn.settimeout(10)
+   
                 context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
                 sock = context.wrap_socket(conn, server_hostname=hostname)
                 certificate = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
                 x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,certificate)
             except BaseException as e:
                 if args['verbose']:
-                    print("...... [warning] Can't connect to '{}' error: {}".format(host,str(e)))
+                    logger.error("Can't connect to '{}' error: {}".format(host,str(e)))
                 er.append("Can't connect to '{}' error: {}".format(host,str(e)))
             else:
                 serial= '{0:x}'.format(x509.get_serial_number())
                 
                 exp_date = str(x509.get_notAfter().decode('utf-8'))
                 dt = parse(exp_date)
-
                 daystoexp=dt.replace(tzinfo=None)-datetime.utcnow()
-
-
                 item = {}
                 item['Domain'] = str(host)
                 item['Serial'] = str(serial)
@@ -166,12 +191,14 @@ def getCertificates(domains: list,configName:str=None):
         if configName is not None:
             er.append("No customer origins found on the configuration '{}'.".format(configName))
             if args['verbose']:
-                print("...... [warning] No customer origins found on the configuration '{}.".format(configName))
+
+                logger.warning("No customer origins found on the configuration '{}.".format(configName))
 
         else:
             er.append("No customer origins found.")
             if args['verbose']:
-                print("...... [warning] No customer origins found.")
+          
+                logger.warning("No customer origins found.")
 
 
     if certs != []:
@@ -196,9 +223,10 @@ def readEdgeRC():
 
     a = Credentials()
     home = str(Path.home())
-    edgerc = '/.edgerc'
+    edgerc = "/.edgerc"
     if args['verbose']:
-        print("...... Reading Edgerc {}.".format(home+edgerc))
+    
+        logger.debug("Reading Edgerc {}.".format(home+edgerc))
     if os.path.exists(home+edgerc):
         with open(home+edgerc) as fp:
             selectedProfile=False
@@ -227,10 +255,11 @@ def readEdgeRC():
         return None
     else:
         if args['verbose']:
-            print("...... [warning] The File {} does not exist!".format(home+edgerc))
+       
+            logger.error("The File {} does not exist!".format(home+edgerc))
         parser.error("The File {} does not exist!".format(home+edgerc))
 
-def papi(a: Credentials,action:str,config:str=None,p:list=None):
+def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
     http = requests.Session()
     http.auth= EdgeGridAuth(
             client_token=a.client_token,
@@ -244,21 +273,31 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
     #ListGroups
     elif action == validActions[0]:
         if args['verbose']:
-            print("...... Listing account groups with PAPI.")
+     
+            logger.debug("Listing account groups with PAPI.")
         
         if args['account_key']:
             endpoint='/papi/v1/groups?accountSwitchKey={}'.format(args['account_key'])
         else:
             endpoint= '/papi/v1/groups'
         result = http.get(urljoin("https://" + a.host + "/", endpoint))
+        response = json.loads(json.dumps(result.json()))
         http.close()
+        return response
+        
+
     #ListProperties
     elif action == validActions[2]:
-        gps = papi(a,"ListGroups")
+        gps = propertyManagerAPI(a,"ListGroups")
+        if gps is None:
+       
+            logger.warning("No Groups were found in account!")
+            return None
         for gp in gps['groups']['items']:
             for contract in gp['contractIds']:
                 if args['verbose']:
-                    print("...... Listing properties in '{}'/'{}' with PAPI.".format(gp['groupId'],contract))
+    
+                    logger.debug("Listing properties in '{}'/'{}' with PAPI.".format(gp['groupId'],contract))
  
                 if args['account_key']:
                     endpoint= '/papi/v1/properties?contractId={}&groupId={}&accountSwitchKey={}'.format(contract,gp['groupId'],args['account_key'])
@@ -270,26 +309,28 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
                 for p in response['properties']['items']:
 
                     if p['productionVersion'] is None or p is None:
-                        #print(False)
+        
                         item={}
                         er=[]
                         er.append("The configuration has no active version in production.")
                         if args['verbose']:
-                            print("...... [warning] The configuration '{}' has no active version in production.".format(p['propertyName']))
+                       
+                            logger.warning("The configuration '{}' has no active version in production.".format(p['propertyName']))
                         item['propertyName']=p['propertyName']
                         item['errors']=er
                         item_list.append(item)
                     else:
-                        #print("here")
+
                         p['propertyVersion']=p['productionVersion']
                         del p['productionVersion']
-                        papi(a,"GetRuleTree","",p)
+                        propertyManagerAPI(a,"GetRuleTree","",p)
 
     elif action == validActions[3]:
 
 
         if args['verbose']:
-            print("...... Getting rule tree for the '{}' property with PAPI.".format(p['propertyName']))
+  
+            logger.debug("Getting rule tree for the '{}' property with PAPI.".format(p['propertyName']))
         if args['account_key']:
            
             endpoint= "/papi/v1/properties/{}/versions/{}/rules?contractId={}&groupId={}&validateRules=true&validateMode=fast&accountSwitchKey={}".format(
@@ -315,7 +356,8 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
 
     elif action == validActions[4]:
         if args['verbose']:
-            print("...... Looking for the configuration '{}'.".format(config))
+         
+            logger.debug("Looking for the configuration '{}'.".format(config))
         if args['account_key']:
             endpoint='/papi/v1/search/find-by-value?accountSwitchKey={}'.format(args['account_key'])
         else:
@@ -331,7 +373,8 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
             er=[]
             item['propertyName']=config
             if args['verbose']:
-                    print("...... [warning] The configuration '{}' was not found.".format(config))
+             
+                    logger.warning("The configuration '{}' was not found.".format(config))
             er.append("The configuration was not found.")
             item['errors']=er
              
@@ -339,17 +382,19 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
             return 
         else:
             if args['verbose']:
-                print("...... The configuration '{}' was found.".format(config))
+       
+                logger.debug("The configuration '{}' was found.".format(config))
             prodversion = None
             for i in result.json()['versions']['items']:
                 if i['productionStatus'] == "ACTIVE":
                     prodversion = True
-                    papi(a,"GetRuleTree","",i)
+                    propertyManagerAPI(a,"GetRuleTree","",i)
             if prodversion is None:
                 item={}
                 er=[]
                 if args['verbose']:
-                    print("...... [warning] The configuration '{}' has no active version in production.".format(config))
+                 
+                    logger.warning("The configuration '{}' has no active version in production.".format(config))
                 er.append("The configuration has no active version in production.")
                 item['propertyName']=config
                 item['errors']=er
@@ -361,11 +406,14 @@ def papi(a: Credentials,action:str,config:str=None,p:list=None):
         
 
     return None
-def run():
+def main():
+    
     if not args['audit']:
         parser.print_help()
     if args['verbose']:
-        print("...... [start] {}".format(datetime.now()))
+        configure_logging()
+     
+        logger.info("[start]")
     if args['audit'] == "list":
         if args['domains'] is None:
             parser.error("--domains is required to provide list of domains.")
@@ -391,17 +439,17 @@ def run():
             else:
                 for i in args['config_name']:
 
-                    papi(a,"SearchProperty",i)
+                    propertyManagerAPI(a,"SearchProperty",i)
                     
                 printJson()
     elif (args['audit'] == "account"):
         a = readEdgeRC() 
 
-        papi(a,"ListProperties")
+        propertyManagerAPI(a,"ListProperties")
         printJson()
 
    
 if __name__ == '__main__':
-    run()
+    main()
 
         
