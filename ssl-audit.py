@@ -202,7 +202,7 @@ def getCertificates(domains: list,configName:str=None):
 
 
     if certs != []:
-        currentConfig['certicates'] = certs
+        currentConfig['certificates'] = certs
 
         
     if er != []:
