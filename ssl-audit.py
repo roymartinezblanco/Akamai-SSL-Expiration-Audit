@@ -213,12 +213,17 @@ def propertyManagerAPI(action:str,config:str=None,p:list=None):
     try:
         home = str(Path.home())
         edgerc = EdgeRc(home+"/.edgerc")
-        host = edgerc.get('papi','host')
+        
+        if args['section']:
+            section = args['section']
+        else:
+            section = 'papi'
+        host = edgerc.get(section,'host')
     except Exception as e:
         logger.debug("Error Autehticating Edgerc {}.".format(home+edgerc))
     
     http = requests.Session()
-    http.auth= EdgeGridAuth.from_edgerc(edgerc,'papi')
+    http.auth= EdgeGridAuth.from_edgerc(edgerc,section)
     validActions = ["ListGroups","ListContracts","ListProperties","GetRuleTree","SearchProperty"]
     if action not in validActions:
         
@@ -242,10 +247,15 @@ def propertyManagerAPI(action:str,config:str=None,p:list=None):
     #ListProperties
     elif action == validActions[2]:
         gps = propertyManagerAPI("ListGroups")
+
         if gps is None:
        
             logger.warning("No Groups were found in account!")
             return None
+        elif gps['incidentId']:
+            logger.error('{}'.format(gps['title']))
+            return None
+     
         for gp in gps['groups']['items']:
             for contract in gp['contractIds']:
                 if args['verbose']:
