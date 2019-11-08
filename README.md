@@ -28,6 +28,14 @@ This project will help mostly Akamai customers but the Audit list functionality 
 * Switch Key Integration (for multi-account management) 
 
 ## Prerequisites/Requirements
+
+You need python3 and pip3 to fun this script.
+Python3 can be found [here](https://www.python.org/downloads/)
+
+To update pip.
+
+```python3 -m pip install --upgrade pip```
+
 I've provided the requirements document to help install all dependencies.
 
 ``` pip install -r requirements.txt```

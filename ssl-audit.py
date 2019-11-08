@@ -2,7 +2,7 @@ import OpenSSL , ssl,  argparse ,json, os.path, validators, requests, logging
 from datetime import datetime
 from dateutil.parser import parse
 from urllib.parse import urljoin
-from akamai.edgegrid import EdgeGridAuth
+from akamai.edgegrid import EdgeGridAuth, EdgeRc
 from pathlib import Path
 
 #TODO: FIX logger format
@@ -32,18 +32,12 @@ parser.add_argument('--account-key', type=str, help='Account ID to Query for mul
 args = vars(parser.parse_args())
 
 ### Global Variables
-#version= 0.1
+#version= 0.1 INTERNAL
 errors = []
 items = {}
 item_list= []
 logger = logging.getLogger("SSL-AUDIT")
 
-class Credentials:
-    def __init__(self):
-        self.client_secret = ""
-        self.host = ""
-        self.access_token = ""
-        self.client_token = ""
 
 def configure_logging():
     logger.setLevel(logging.DEBUG)
@@ -214,58 +208,17 @@ def getCertificates(domains: list,configName:str=None):
 
     return
 
-def readEdgeRC():
-    
-    if args['section']:
-        section='['+args['section']+']'
-    else: 
-        section='[default]'
+def propertyManagerAPI(action:str,config:str=None,p:list=None):
 
-    a = Credentials()
-    home = str(Path.home())
-    edgerc = "/.edgerc"
-    if args['verbose']:
+    try:
+        home = str(Path.home())
+        edgerc = EdgeRc(home+"/.edgerc")
+        host = edgerc.get('papi','host')
+    except Exception as e:
+        logger.debug("Error Autehticating Edgerc {}.".format(home+edgerc))
     
-        logger.debug("Reading Edgerc {}.".format(home+edgerc))
-    if os.path.exists(home+edgerc):
-        with open(home+edgerc) as fp:
-            selectedProfile=False
-            line = fp.readline()
-            while line:
-                line = fp.readline()
-                if line.strip().lower() == section:
-                    selectedProfile=True
-                if line.strip() == "":
-                    selectedProfile=False
-                if selectedProfile == True and line.strip().lower() != section:
-                    key,value=line.split(" = ")
-         
-                    if key== "client_secret":
-                        a.client_secret=value.rstrip()
-                    elif key== "host":
-                        a.host=value.rstrip()
-                    elif key== "access_token":
-                        a.access_token=value.rstrip()
-                    elif key== "client_token":
-                        a.client_token=value.rstrip()
-                if a.client_token != "" and a.host != "" and a.client_secret != "" and a.access_token != "":
-                    fp.close()
-                    return a
-        fp.close()
-        return None
-    else:
-        if args['verbose']:
-       
-            logger.error("The File {} does not exist!".format(home+edgerc))
-        parser.error("The File {} does not exist!".format(home+edgerc))
-
-def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
     http = requests.Session()
-    http.auth= EdgeGridAuth(
-            client_token=a.client_token,
-            client_secret=a.client_secret,
-            access_token=a.access_token
-        )
+    http.auth= EdgeGridAuth.from_edgerc(edgerc,'papi')
     validActions = ["ListGroups","ListContracts","ListProperties","GetRuleTree","SearchProperty"]
     if action not in validActions:
         
@@ -280,7 +233,7 @@ def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
             endpoint='/papi/v1/groups?accountSwitchKey={}'.format(args['account_key'])
         else:
             endpoint= '/papi/v1/groups'
-        result = http.get(urljoin("https://" + a.host + "/", endpoint))
+        result = http.get(urljoin("https://" + host + "/", endpoint))
         response = json.loads(json.dumps(result.json()))
         http.close()
         return response
@@ -288,7 +241,7 @@ def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
 
     #ListProperties
     elif action == validActions[2]:
-        gps = propertyManagerAPI(a,"ListGroups")
+        gps = propertyManagerAPI("ListGroups")
         if gps is None:
        
             logger.warning("No Groups were found in account!")
@@ -303,7 +256,7 @@ def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
                     endpoint= '/papi/v1/properties?contractId={}&groupId={}&accountSwitchKey={}'.format(contract,gp['groupId'],args['account_key'])
                 else:
                     endpoint= '/papi/v1/properties?contractId={}&groupId={}'.format(contract,gp['groupId'])
-                result = http.get(urljoin("https://" + a.host + "/", endpoint))
+                result = http.get(urljoin("https://" + host + "/", endpoint))
                 http.close()
                 response = json.loads(json.dumps(result.json()))
                 for p in response['properties']['items']:
@@ -323,7 +276,7 @@ def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
 
                         p['propertyVersion']=p['productionVersion']
                         del p['productionVersion']
-                        propertyManagerAPI(a,"GetRuleTree","",p)
+                        propertyManagerAPI("GetRuleTree","",p)
 
     elif action == validActions[3]:
 
@@ -349,7 +302,7 @@ def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
             )
 
  
-        result = http.get(urljoin("https://" + a.host + "/", endpoint))
+        result = http.get(urljoin("https://" + host + "/", endpoint))
         http.close()
 
         readObject(json.loads(json.dumps(result.json())) ,"API",p['propertyName'])
@@ -364,7 +317,7 @@ def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
             endpoint='/papi/v1/search/find-by-value'
         postbody = {}
         postbody['propertyName'] = config
-        result = http.post(urljoin("https://" + a.host + "/", endpoint),json.dumps(postbody), headers={"Content-Type": "application/json"})
+        result = http.post(urljoin("https://" + host + "/", endpoint),json.dumps(postbody), headers={"Content-Type": "application/json"})
         http.close()
 
         
@@ -388,7 +341,7 @@ def propertyManagerAPI(a: Credentials,action:str,config:str=None,p:list=None):
             for i in result.json()['versions']['items']:
                 if i['productionStatus'] == "ACTIVE":
                     prodversion = True
-                    propertyManagerAPI(a,"GetRuleTree","",i)
+                    propertyManagerAPI("GetRuleTree","",i)
             if prodversion is None:
                 item={}
                 er=[]
@@ -432,20 +385,14 @@ def main():
         if args['config_name'] is None:
             parser.error("--config-name is required to provide configuration to be audited.")
         else:    
-            a = readEdgeRC()  
-            if a is None:
-                parser.error("Unable to read EdgeRc Credentials for PAPI section")
-
-            else:
-                for i in args['config_name']:
-
-                    propertyManagerAPI(a,"SearchProperty",i)
-                    
-                printJson()
+            for i in args['config_name']:
+                propertyManagerAPI("SearchProperty",i)
+                
+            printJson()
     elif (args['audit'] == "account"):
-        a = readEdgeRC() 
+        #a = readEdgeRC() 
 
-        propertyManagerAPI(a,"ListProperties")
+        propertyManagerAPI("ListProperties")
         printJson()
 
    
