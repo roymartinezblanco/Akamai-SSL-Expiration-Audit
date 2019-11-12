@@ -40,24 +40,6 @@ I've provided the requirements document to help install all dependencies.
 
 ``` pip install -r requirements.txt```
 
-    asn1crypto==0.24.0
-    certifi==2019.9.11
-    cffi==1.12.3
-    chardet==3.0.4
-    cryptography==2.7
-    decorator==4.4.0
-    edgegrid-python==1.1.1
-    idna==2.8
-    ndg-httpsclient==0.5.1
-    pyasn1==0.4.7
-    pycparser==2.19
-    pyOpenSSL==19.0.0
-    python-dateutil==2.8.0
-    requests==2.22.0
-    six==1.12.0
-    urllib3==1.25.6
-    validators==0.14.0
-
 
 ## Limitations
 Currently, for version 0.1 this script <span style="color:red">**will not look at variables within the origin behaviors**</span> (Property Manager) since this adds a lot of complexity. This is because as an example: a variable (origin) can be made from other variables that are only available in execution time.
