@@ -252,9 +252,9 @@ def propertyManagerAPI(action:str,config:str=None,p:list=None):
        
             logger.warning("No Groups were found in account!")
             return None
-        elif gps['incidentId']:
-            logger.error('{}'.format(gps['title']))
-            return None
+        # elif gps['incidentId']:
+        #     logger.error('{}'.format(gps['title']))
+        #     return None
      
         for gp in gps['groups']['items']:
             for contract in gp['contractIds']:
