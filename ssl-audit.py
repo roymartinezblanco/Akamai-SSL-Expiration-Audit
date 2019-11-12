@@ -11,6 +11,8 @@ from pathlib import Path
 #improve help documentation
 
 parser = argparse.ArgumentParser(description='Certificate Expiration Audit\nLatest version and documentation can be found here:\nhttps://github.com/roymartinezblanco/Akamai-SSL-Expiration-Audit',formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('--version', help='Show script version information',
+                    required=False,  action='store_true')
 parser.add_argument('--audit', type=str, choices=['account','config','file','list'], help='*required* Type of Audit to be done: [account,config,file,list]',
                     required=False)
 parser.add_argument('--domains', nargs='+', type=str, help='List of domains to query.',
@@ -32,7 +34,7 @@ parser.add_argument('--account-key', type=str, help='Account ID to Query for mul
 args = vars(parser.parse_args())
 
 ### Global Variables
-#version= 0.1 INTERNAL
+version= "1.0.30"
 errors = []
 items = {}
 item_list= []
@@ -371,6 +373,9 @@ def propertyManagerAPI(action:str,config:str=None,p:list=None):
     return None
 def main():
     
+    if args['version']:
+        print(version)
+        return
     if not args['audit']:
         parser.print_help()
     if args['verbose']:
