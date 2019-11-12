@@ -57,6 +57,8 @@ Currently, for version 0.1 this script <span style="color:red">**will not look a
 | --section     |   | string | | name of EdgeRC credential section to be used for Akamai PAPI.
 | --account-key |   | string | Akamai account ID to be audited (SwitchKey) |
 | --verbose     |   |  None | Print debug information.|
+| --version     |   |  None | Print script version.|
+
 
 ### **Audit** --audit
 
